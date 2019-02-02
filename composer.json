@@ -1,0 +1,27 @@
+{
+  "name": "oblind/swoole",
+  "type": "library",
+  "description": "oblind swoole framework",
+  "keywords": [
+    "oblind", "swoole"
+  ],
+  "license" : "Apache-2.0",
+  "authors": [
+    {
+      "name": "oblind",
+      "email": "oblind@163.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Oblind\\": "src/"
+    }
+  },
+  "bin": "bin/swoole",
+  "require": {
+    "psr/simple-cache": "^1.0.1"
+  },
+  "require-dev": {
+      "swoft/swoole-ide-helper": "^2.1.3"
+  }
+}
