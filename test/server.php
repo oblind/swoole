@@ -1,5 +1,6 @@
 <?php
 require '../vendor/autoload.php';
+require './Http.php';
 
 use Swoole\Http\Request;
 use Swoole\Http\Response;
@@ -13,9 +14,6 @@ class WebSocketServer extends WebSocket {
 }
 
 $svr = new WebSocketServer('127.0.0.1', 9201);
-
-$http = $svr->addHttpServer('127.0.0.1', 9200, function(Request $request, Response $response, $svr) {
-  $response->end(json_encode(['wid' => $svr->worker_id, 'svr' => $request->server], JSON_UNESCAPED_UNICODE));
-});
+$http = new Http($svr, '127.0.0.1', 9200);
 
 $svr->start();

@@ -15,8 +15,6 @@ abstract class WebSocket extends WebSocketServer {
   public $lang;
   /**@var string 日志路径 */
   public $logFile = 'log.txt';
-  /**@var array http 服务器*/
-  public $httpServers = [];
 
   function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
     parent::__construct($host, $port, $mode, $sock_type);
@@ -69,15 +67,6 @@ abstract class WebSocket extends WebSocketServer {
     $this->on('message', function(Server $svr, Frame $f) {
       $this->onMessage($f);
     });
-  }
-
-  function addHttpServer(string $host, int $port, $onRequest): Port {
-    $http = $this->addlistener($host, $port, SWOOLE_SOCK_TCP);
-    $http->on('request', function(Request $request, Response $response) use($onRequest) {
-      $onRequest($request, $response, $this);
-    });
-    $this->httpServers[] = $http;
-    return $http;
   }
 
   function onManagerStart() {
