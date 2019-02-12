@@ -1,8 +1,8 @@
 <?php
-namespace Oblind\Server;
+namespace Oblind\WebSocket;
 
 use Swoole\Table;
-use Swoole\Server;
+use Swoole\Server as SwooleServer;
 use Swoole\Server\Port;
 use Swoole\Server\Task;
 use Swoole\Http\Request;
@@ -10,7 +10,7 @@ use Swoole\Http\Response;
 use Swoole\WebSocket\Frame;
 use Swoole\Websocket\Server as WebSocketServer;
 
-abstract class WebSocket extends WebSocketServer {
+abstract class Server extends WebSocketServer {
   /**@var \Language */
   public $lang;
   /**@var string 日志路径 */
@@ -19,52 +19,52 @@ abstract class WebSocket extends WebSocketServer {
   function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
     parent::__construct($host, $port, $mode, $sock_type);
 
-    $this->on('managerStart', function(Server $svr) {
+    $this->on('managerStart', function(SwooleServer $svr) {
       $this->onManagerStart();
     });
 
-    $this->on('shutdown', function(Server $svr) {
+    $this->on('shutdown', function(SwooleServer $svr) {
       $this->onShutdown();
     });
 
-    $this->on('workerStart', function(Server $svr, int $wid) {
+    $this->on('workerStart', function(SwooleServer $svr, int $wid) {
       if($this->taskworker)
         $this->onTaskWorkerStart($wid);
       else
         $this->onWorkerStart($wid);
     });
 
-    $this->on('workerStop', function(Server $svr, int $wid) {
+    $this->on('workerStop', function(SwooleServer $svr, int $wid) {
       if($this->taskworker)
         $this->onTastWorkerStop($wid);
       else
         $this->onWorkerStop($wid);
     });
 
-    $this->on('pipeMessage', function(Server $svr, $src_wid, $d) {
+    $this->on('pipeMessage', function(SwooleServer $svr, $src_wid, $d) {
       $this->onPipeMessage($src_wid, $d);
     });
 
-    /*$this->on('task', function(Server $svr, $tid, $wid, $data) {
+    /*$this->on('task', function(SwooleServer $svr, $tid, $wid, $data) {
       $this->onTask($tid, $wid, $data);
     });*/
-    $this->on('task', function(Server $svr, Task $task) {
+    $this->on('task', function(SwooleServer $svr, Task $task) {
       $this->onTask($task->id, $task->worker_id, $task->data);
     });
 
-    $this->on('finish', function(Server $svr, int $tid, string $data) {
+    $this->on('finish', function(SwooleServer $svr, int $tid, string $data) {
       $this->onFinish($tid, $data);
     });
 
-    $this->on('open', function(Server $svr, $req) {
+    $this->on('open', function(SwooleServer $svr, $req) {
       $this->onOpen($req);
     });
 
-    $this->on('close', function(Server $svr, int $fd, int $rid) {
+    $this->on('close', function(SwooleServer $svr, int $fd, int $rid) {
       $this->onClose($fd, $rid);
     });
 
-    $this->on('message', function(Server $svr, Frame $f) {
+    $this->on('message', function(SwooleServer $svr, Frame $f) {
       $this->onMessage($f);
     });
   }
