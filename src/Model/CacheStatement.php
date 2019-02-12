@@ -1,7 +1,7 @@
 <?php
 namespace Oblind\Model;
 
-use Oblind\Cache\Base;
+use Oblind\Cache\BaseCache;
 
 class CacheStatement extends Statement {
   protected $prefix;
@@ -13,7 +13,7 @@ class CacheStatement extends Statement {
     $this->pure = $class::pure();
   }
 
-  protected function cache($a, Base $cache) {
+  protected function cache($a, BaseCache $cache) {
     $l = strlen($this->prefix);
     $ps = $cache->keys($this->prefix . '*');
     foreach($ps as $p)
@@ -34,7 +34,7 @@ class CacheStatement extends Statement {
       $cache->set($this->prefix . $m->{$pr}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
   }
 
-  protected function match($k, $col, Base $cache) {
+  protected function match($k, $col, BaseCache $cache) {
     if($m = json_decode($cache->get($k))) {
       $f = true;
       if(is_array($this->condition))

@@ -1,7 +1,7 @@
 <?php
 namespace Oblind\Cache;
 
-class Redis extends Base {
+class Redis extends BaseCache {
   public static $host = 'localhost';
   public static $port = 6379;
   public static $timeout = 3;

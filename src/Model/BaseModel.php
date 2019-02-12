@@ -5,7 +5,7 @@ use PDO;
 use PDOStatement;
 use JsonSerializable;
 
-abstract class Base extends Decachable implements JsonSerializable {
+abstract class BaseModel extends Decachable implements JsonSerializable {
   protected static $tableNames = [];
   protected static $primary = 'id';
   protected static $returnRawCount = 0;
