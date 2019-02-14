@@ -73,11 +73,11 @@ class Validator {
     if($rule == 'required') {
       $r = isset($values[$field]);
       if(!$r)
-        $err = str_replace(':attribute', static::$fields[$field] ?? $field, _(':attribute required'));
+        $err = str_replace(':attribute', _(static::$fields[$field] ?? $field), _(':attribute required'));
       return $r;
     }
     elseif(isset($values[$field]) && !static::$rule($values[$field], $a, $err, $values, $field)) {
-      $err = str_replace(':attribute', static::$fields[$field] ?? $field, $err);
+      $err = str_replace(':attribute', _(static::$fields[$field] ?? $field), $err);
       return false;
     }
     return true;
