@@ -15,8 +15,8 @@ class WebSocket extends Server {
   }
 }
 
-$svr = new WebSocket('127.0.0.1', 9201);
-$http = new LanguagePort($svr, '127.0.0.1', 9200);
+$svr = new WebSocket('0.0.0.0', 9201);
+$http = new LanguagePort($svr, '0.0.0.0', 9200);
 $http->router->addController(new IndexController, '/');
 $http->router->addController(new TestController);
 

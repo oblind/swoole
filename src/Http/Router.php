@@ -77,18 +77,17 @@ class Router {
     $this->act('DELETE', $rule, $route, $name, $router);
   }
 
-  function route(Request $request, Response $response) {
+  function route(Request $request, Response $response): bool {
     foreach($this->routes as $r)
       if($r->route($request)) {
         $this->controllers["{$r->route['module']}\\{$r->route['controller']}"]->$r->route['action']();
-        return;
+        return true;
       }
-    if($this->defaultRoute->route($request))
+    if($this->defaultRoute->route($request)) {
       $this->dispatch($this->defaultRoute->controller, $this->defaultRoute, $request, $response);
-    else {
-      echo "404 not found\n";
-      $response->status(404);
-    }
+      return true;
+    } else
+      return false;
   }
 
   function dispatch(Controller $controller, BaseRoute $route, Request $request, Response $response) {

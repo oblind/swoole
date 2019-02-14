@@ -5,6 +5,12 @@ use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Swoole\WebSocket\Server;
 
+const RES_BAD_REQUEST = 400;
+const RES_NO_PERMISSION = 401;
+const RES_FORBIDEN = 403;
+const RES_NOT_FOUND = 404;
+const RES_NOT_ALLOWED = 405;
+
 class Port {
   /**@var \Swoole\Websocket\Server $svr */
   public $svr;
@@ -28,7 +34,21 @@ class Port {
     });
   }
 
+  function notFound(Response $response) {
+    $response->status(RES_NOT_FOUND);
+    $response->end('<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width">
+</head>
+<body>
+  <h1>404: page not found</h1>
+</body>
+</html>');
+  }
+
   function onRequest(Request $request, Response $response, Server $svr) {
-    $this->router->route($request, $response);
+    if(!$this->router->route($request, $response))
+      $this->notFound($response);
   }
 }
