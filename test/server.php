@@ -3,10 +3,9 @@ require '../vendor/autoload.php';
 require './controller/IndexController.php';
 require './controller/Api/TestController.php';
 
-use Swoole\Http\Request;
-use Swoole\Http\Response;
 use Oblind\WebSocket\Server;
-use Oblind\Http\Port;
+use Oblind\Http\LanguagePort;
+use Oblind\Language;
 use Tyer\Api\TestController;
 
 class WebSocket extends Server {
@@ -17,9 +16,8 @@ class WebSocket extends Server {
 }
 
 $svr = new WebSocket('127.0.0.1', 9201);
-$http = new Port($svr, '127.0.0.1', 9200);
+$http = new LanguagePort($svr, '127.0.0.1', 9200);
 $http->router->addController(new IndexController, '/');
 $http->router->addController(new TestController);
-var_dump($http->router->controllers);
 
 $svr->start();

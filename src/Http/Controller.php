@@ -13,7 +13,7 @@ class Controller {
   public $request;
   /**@var Response $response */
   public $response;
-  /**@var Route $route */
+  /**@var Route\BaseRoute $route */
   public $route;
 
   function __construct($config = null) {

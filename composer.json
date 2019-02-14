@@ -19,7 +19,8 @@
   },
   "bin": "bin/swoole",
   "require": {
-    "psr/simple-cache": "^1.0.1"
+    "psr/simple-cache": "^1.0.1",
+    "oblind/language": "dev-master"
   },
   "require-dev": {
       "swoft/swoole-ide-helper": "^2.1.3"
