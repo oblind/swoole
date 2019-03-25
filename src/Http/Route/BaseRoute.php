@@ -8,16 +8,14 @@ use Oblind\Http\Controller;
 abstract class BaseRoute {
   /**@var Router $router */
   public $router;
-  /**@var Request $request */
-  public $request;
-  /**@var Response $response */
-  public $response;
   /**@var Controller $controller */
   public $controller;
   /**@var string $action */
   public $action;
   /**@var array $params */
   public $params;
+  /**@var array $middleware */
+  public $middlewares;
 
   function __construct(Router $router, Controller $controller = null, string $action = null, array $params = null) {
     $this->router = $router;
@@ -55,6 +53,17 @@ abstract class BaseRoute {
         $r[] = $f;
     } while($p !== false);
     return $r;
+  }
+
+  function insertMiddleware(array $middlewares, int $index = -1) {
+    if(!$this->middlewares)
+      $this->middlewares = [];
+    if($index == -1)
+      $this->middlewares = array_merge($this->middlewares, $middlewares);
+    else {
+      $t = array_splice($this->middlewares, 0, $index);
+      $this->middlewares = array_merge($t, $middlewares, $this->middlewares);
+    }
   }
 
   abstract function route(Request $request): bool;

@@ -6,6 +6,7 @@ use Swoole\Http\Response;
 use Oblind\Http\Route\BaseRoute;
 use Oblind\Http\Route\Restful;
 use Oblind\Http\Controller;
+use Oblind\Http\Pipeline;
 
 class Router {
   /**@var array $routes */
@@ -88,21 +89,27 @@ class Router {
       }
     if(!$this->curRoute && $this->defaultRoute->route($request))
       $this->curRoute = $this->defaultRoute;
-    if($this->curRoute) {
-      $this->curRoute->request = $request;
-      $this->curRoute->response = $response;
+    if($this->curRoute)
       return true;
-    }
     return false;
+  }
+
+  function resole(Request $request, Response $response) {
+    $c = $this->curRoute->controller;
+    $c->route = $this->curRoute;
+    $c->{"{$this->curRoute->action}Action"}($request, $response);
   }
 
   function dispatch(Request $request, Response $response): bool {
     if($this->route($request, $response)) {
-      $c = $this->curRoute->controller;
-      $c->route = $this->curRoute;
-      $c->request = $this->curRoute->request;
-      $c->response = $this->curRoute->response;
-      $c->{"{$this->curRoute->action}Action"}();
+      if($this->curRoute->middlewares) {
+        $p = new Pipeline;
+        $p->send($request, $response);
+        foreach($this->curRoute->middlewares as $m)
+          $p->pipe([$m, 'handle']);
+        $p->then([$this, 'resole']);
+      } else
+        $this->resole($request, $response);
       return true;
     }
     return false;

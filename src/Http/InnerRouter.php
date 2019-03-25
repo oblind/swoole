@@ -4,7 +4,7 @@ namespace Oblind\Http;
 class InnerRouter {
   public $routes = [];
 
-  function middleware(Middleware $middleware, Closure $callback) {
+  function middleware(array $middleware, callable $callback) {
     $ir = new static;
     $callback($ir);
     foreach($ir->routes as &$r) {

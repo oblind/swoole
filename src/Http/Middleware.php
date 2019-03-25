@@ -1,8 +1,9 @@
 <?php
 namespace Oblind\Http;
 
-use Yaf\Request\Http;
+use Swoole\Http\Request;
+use Swoole\Http\Response;
 
 abstract class Middleware {
-  abstract function handle(Http $request, $next): void;
+  abstract function handle(Request $request, Response $response, callable $next): void;
 }
