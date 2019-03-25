@@ -12,8 +12,6 @@ class WebSocket extends WebSocketServer {
   public $lang;
   /**@var string 日志路径 */
   public $logFile = 'log.txt';
-  /**@var bool $enableCoroutine */
-  public $enableCoroutine = true;
 
   function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
     parent::__construct($host, $port, $mode, $sock_type);
@@ -78,8 +76,7 @@ class WebSocket extends WebSocketServer {
     set_error_handler(function($errno, $errstr, $errfile, $errline) {
       throw new \Exception($errstr, $errno);
     });
-    if($this->enableCoroutine)
-      \Swoole\Runtime::enableCoroutine();
+    \Swoole\Runtime::enableCoroutine();
   }
 
   function onWorkerStop(int $wid) {

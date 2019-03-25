@@ -4,18 +4,32 @@ namespace Oblind\Model;
 use PDO;
 use PDOStatement;
 use JsonSerializable;
+use Oblind\Application;
 
-abstract class BaseModel extends Decachable implements JsonSerializable {
+class BaseModel extends Decachable implements JsonSerializable {
+  /**@var \SplQueue */
+  protected static $dbPool;
+  /**@var array */
   protected static $tableNames = [];
+  /**@var string */
   protected static $primary = 'id';
+  /**@var int */
   protected static $returnRawCount = 0;
+  /**@var array */
   protected static $hidden;
+  /**@var array */
   protected static $jsonFields;
+  /**@var array */
   protected static $cacheFields;
+  /**@var array */
   protected static $cacheClasses;
+  /**@var array */
   protected static $cacheItemClasses;
+  /**@var bool */
   protected $_create;
+  /**@var \stdClass */
   protected $_data;
+  /**@var array */
   protected $_col = [];
 
   function __construct($data = null, $parent = null, $parentKey = null) {
@@ -33,8 +47,33 @@ abstract class BaseModel extends Decachable implements JsonSerializable {
     }
   }
 
-  abstract static function getDatabase(): PDO;
-  abstract static function putDatabase(PDO $db);
+  static function getDatabase(): PDO {
+    if(static::$dbPool->count())
+      return static::$dbPool->pop();
+    $cfg = Application::config();
+    _getdb:
+    try {
+      $db = new PDO(
+        "$cfg->type:host=$cfg->host;port=$cfg->port;dbname=$cfg->database", $cfg->user, $cfg->password, [
+          //持久连接
+          PDO::ATTR_PERSISTENT => true,
+          //返回对象, FETCH_ASSOC: 返回数组
+          PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+          //不对数字转化字符串
+          PDO::ATTR_EMULATE_PREPARES => false,
+          //抛出异常
+          PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+        ]
+      );
+    } catch(\Throwable $e) {
+      goto _getdb;
+    }
+    return $db;
+  }
+
+  static function putDatabase(PDO $db) {
+    static::$dbPool->push($db);
+  }
 
   function &__get($k) {
     return $this->_data->$k;
@@ -237,3 +276,5 @@ abstract class BaseModel extends Decachable implements JsonSerializable {
     return $r;
   }
 }
+
+BaseModel::$dbPool = new \SplQueue;
