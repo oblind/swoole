@@ -12,15 +12,15 @@ const RES_NOT_FOUND = 404;
 const RES_NOT_ALLOWED = 405;
 
 class Port {
-  /**@var \Swoole\Websocket\Server $svr */
+  /**@var \Swoole\Websocket\Server */
   public $svr;
-  /**@var string $host */
+  /**@var string */
   public $host;
-  /**@var int $port */
+  /**@var int */
   public $port;
-  /**@var \Swoole\Server\Port $http */
+  /**@var \Swoole\Server\Port */
   public $http;
-  /**@var Router $router */
+  /**@var Router */
   public $router;
 
   function __construct(Server $svr, string $host = 'localhost', int $port = 0) {

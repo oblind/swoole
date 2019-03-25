@@ -9,13 +9,13 @@ use Oblind\Http\Controller;
 use Oblind\Http\Pipeline;
 
 class Router {
-  /**@var array $routes */
+  /**@var array */
   public $routes = [];
   /**@var BaseRoute */
   public $curRoute;
   /**@var BaseRoute */
   public $defaultRoute;
-  /**@var array $controllers */
+  /**@var array */
   public $controllers = [];
 
   function __construct() {
@@ -94,22 +94,20 @@ class Router {
     return false;
   }
 
-  function resole(Request $request, Response $response) {
-    $c = $this->curRoute->controller;
-    $c->route = $this->curRoute;
-    $c->{"{$this->curRoute->action}Action"}($request, $response);
+  function resole(Request $request, Response $response, BaseRoute $route) {
+    $this->curRoute->controller->{"{$this->curRoute->action}Action"}($request, $response, $route);
   }
 
   function dispatch(Request $request, Response $response): bool {
     if($this->route($request, $response)) {
       if($this->curRoute->middlewares) {
         $p = new Pipeline;
-        $p->send($request, $response);
+        $p->send($request, $response, $this->curRoute);
         foreach($this->curRoute->middlewares as $m)
           $p->pipe([$m, 'handle']);
         $p->then([$this, 'resole']);
       } else
-        $this->resole($request, $response);
+        $this->resole($request, $response, $this->curRoute);
       return true;
     }
     return false;

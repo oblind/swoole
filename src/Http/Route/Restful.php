@@ -16,9 +16,9 @@ class Restful extends BaseRoute {
         elseif($m == 'POST' && method_exists($c, 'storeAction'))
           $this->action = 'store';
         elseif($m == 'PUT' && method_exists($c, 'updateAction'))
-          $this->action = 'store';
+          $this->action = 'update';
         elseif($m == 'DELETE' && method_exists($c, 'destroyAction'))
-          $this->action = 'store';
+          $this->action = 'destroy';
         else
           continue;
         $this->controller = $c;

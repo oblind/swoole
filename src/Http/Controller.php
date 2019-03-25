@@ -5,15 +5,15 @@ use Swoole\Http\Request;
 use Swoole\Http\Response;
 
 class Controller {
-  /**@var \stdClass $defaultConfig */
+  /**@var \stdClass */
   static $defaultConfig;
-  /**@var \stdClass $config */
+  /**@var \stdClass */
   public $config;
-  /**@var Request $request */
+  /**@var Request */
   public $request;
-  /**@var Response $response */
+  /**@var Response */
   public $response;
-  /**@var Route\BaseRoute $route */
+  /**@var Route\BaseRoute */
   public $route;
 
   function __construct($config = null) {

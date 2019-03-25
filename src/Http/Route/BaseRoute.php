@@ -6,15 +6,15 @@ use Oblind\Http\Router;
 use Oblind\Http\Controller;
 
 abstract class BaseRoute {
-  /**@var Router $router */
+  /**@var Router */
   public $router;
-  /**@var Controller $controller */
+  /**@var Controller */
   public $controller;
-  /**@var string $action */
+  /**@var string */
   public $action;
-  /**@var array $params */
+  /**@var array */
   public $params;
-  /**@var array $middleware */
+  /**@var array */
   public $middlewares;
 
   function __construct(Router $router, Controller $controller = null, string $action = null, array $params = null) {

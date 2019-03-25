@@ -4,7 +4,7 @@ namespace Oblind\Cache;
 use Psr\SimpleCache\CacheInterface;
 
 abstract class BaseCache implements CacheInterface {
-  /**@var \SplQueue $pool */
+  /**@var \SplQueue */
   protected static $pool;
 
   static function createCache() {
