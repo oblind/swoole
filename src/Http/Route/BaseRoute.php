@@ -8,6 +8,8 @@ use Oblind\Http\Controller;
 abstract class BaseRoute {
   /**@var Router */
   public $router;
+  /**@var string */
+  public $name;
   /**@var Controller */
   public $controller;
   /**@var string */
