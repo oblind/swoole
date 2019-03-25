@@ -4,7 +4,7 @@ namespace Oblind\Model;
 use Oblind\Model\CacheStatement;
 use Oblind\Cache\BaseCache;
 
-abstract class Cache extends BaseModel {
+abstract class CacheModel extends BaseModel {
   protected static $pure = true;
   protected static $loaded;
   /**@var \SplQueue */

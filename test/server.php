@@ -3,14 +3,14 @@ require '../vendor/autoload.php';
 require './controller/IndexController.php';
 require './controller/Api/TestController.php';
 
-use Oblind\WebSocket\Server;
+use Oblind\WebSocket as Server;
 use Oblind\Http\LanguagePort;
-use Oblind\Language;
-use Tyer\Api\TestController;
+use Swoole\Api\TestController;
 
 class WebSocket extends Server {
 
   function onWorkerStart(int $wid) {
+    parent::onWorkerStart($wid);
     echo "$wid worker start\n";
   }
 }

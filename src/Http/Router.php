@@ -11,6 +11,8 @@ class Router {
   /**@var array $routes */
   public $routes = [];
   /**@var BaseRoute */
+  public $curRoute;
+  /**@var BaseRoute */
   public $defaultRoute;
   /**@var array $controllers */
   public $controllers = [];
@@ -29,8 +31,7 @@ class Router {
       $c = substr($c, 0, strlen($c) - 10);
     if($module) {
       $c = ($p = strrpos($c, '/')) === false ? $c : substr($c, $p + 1);
-      if($module != '/')
-        $c = "$module/$c";
+      $c = $module == '/' ? '' : "$module/$c";
     }
     $this->controllers["/$c"] = $controller;
   }
@@ -42,7 +43,7 @@ class Router {
         $route['middleware'] = array_merge($route['middleware'], $middleware);
       else
         $route['middleware'] = $middleware;
-    $this->$routes[] = new Route\Rewrite($rule, $route);
+    $this->$routes[] = new Route\Rewrite($this, $rule, $route);
   }
 
   function middleware(Middleware $middleware, Closure $callback) {
@@ -78,39 +79,32 @@ class Router {
   }
 
   function route(Request $request, Response $response): bool {
+    $this->curRoute = null;
     foreach($this->routes as $r)
       if($r->route($request)) {
         $this->controllers["{$r->route['module']}\\{$r->route['controller']}"]->$r->route['action']();
-        return true;
+        $this->curRoute = $r;
+        break;
       }
-    if($this->defaultRoute->route($request)) {
-      $this->dispatch($this->defaultRoute->controller, $this->defaultRoute, $request, $response);
+    if(!$this->curRoute && $this->defaultRoute->route($request))
+      $this->curRoute = $this->defaultRoute;
+    if($this->curRoute) {
+      $this->curRoute->request = $request;
+      $this->curRoute->response = $response;
       return true;
-    } else
-      return false;
+    }
+    return false;
   }
 
-  function dispatch(Controller $controller, BaseRoute $route, Request $request, Response $response) {
-    $controller->request = $request;
-    $controller->response = $response;
-    $controller->route = $route;
-    switch($request->server['request_method']) {
-    case 'GET':
-      if(method_exists($controller, 'indexAction'))  //index
-        $controller->indexAction();
-      break;
-    case 'POST':
-      if(method_exists($controller, 'storeAction'))
-        $controller->storeAction();
-      break;
-    case 'PUT':
-      if(method_exists($controller, 'updateAction'))
-        $controller->updateAction();
-      break;
-    case 'DELETE':
-      if(method_exists($controller, 'destroyAction'))
-        $controller->destroyAction();
-      break;
+  function dispatch(Request $request, Response $response): bool {
+    if($this->route($request, $response)) {
+      $c = $this->curRoute->controller;
+      $c->route = $this->curRoute;
+      $c->request = $this->curRoute->request;
+      $c->response = $this->curRoute->response;
+      $c->{"{$this->curRoute->action}Action"}();
+      return true;
     }
+    return false;
   }
 }

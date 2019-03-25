@@ -34,21 +34,22 @@ class Port {
     });
   }
 
-  function notFound(Response $response) {
+  function pageNotFound(Request $request, Response $response) {
     $response->status(RES_NOT_FOUND);
-    $response->end('<!DOCTYPE html>
+    $response->end("<!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width">
+  <meta name=\"viewport\" content=\"width=device-width\">
 </head>
 <body>
+  {$request->server['request_uri']}
   <h1>404: page not found</h1>
 </body>
-</html>');
+</html>");
   }
 
   function onRequest(Request $request, Response $response, Server $svr) {
-    if(!$this->router->route($request, $response))
-      $this->notFound($response);
+    if(!$this->router->dispatch($request, $response))
+      $this->pageNotFound($request, $response);
   }
 }

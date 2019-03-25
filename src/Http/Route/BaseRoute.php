@@ -8,8 +8,10 @@ use Oblind\Http\Controller;
 abstract class BaseRoute {
   /**@var Router $router */
   public $router;
-  /**@var string $module */
-  public $module;
+  /**@var Request $request */
+  public $request;
+  /**@var Response $response */
+  public $response;
   /**@var Controller $controller */
   public $controller;
   /**@var string $action */
@@ -17,9 +19,8 @@ abstract class BaseRoute {
   /**@var array $params */
   public $params;
 
-  function __construct(Router $router, string $module = null, string $controller = null, string $action = null, array $params = null) {
+  function __construct(Router $router, Controller $controller = null, string $action = null, array $params = null) {
     $this->router = $router;
-    $this->module = $module;
     $this->controller = $controller;
     $this->action = $action;
     $this->params = $params ?? [];

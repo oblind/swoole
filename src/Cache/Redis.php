@@ -5,10 +5,15 @@ class Redis extends BaseCache {
   public static $host = 'localhost';
   public static $port = 6379;
   public static $timeout = 3;
-  /**@var Redis */
+  /**@var \Redis $redis */
   public $redis;
 
-  function __construct($prefix) {
+  static function initPool() {
+    static::initPool();
+    static::putCache(static::getCache());
+  }
+
+  function __construct(string $prefix = null) {
     $this->redis = new \Redis;
     $this->redis->pconnect(static::$host, static::$port, static::$timeout, $prefix);
   }

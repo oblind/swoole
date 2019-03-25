@@ -21,6 +21,8 @@ class Controller {
   }
 
   function view(string $filename) {
+    echo "{$this->config->viewPath}/$filename\n";
+    echo file_get_contents("{$this->config->viewPath}/$filename");
     $this->response->sendfile("{$this->config->viewPath}/$filename");
   }
 }

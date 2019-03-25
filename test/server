@@ -1,0 +1,3 @@
+#!/bin/sh
+cd /var/www/oblind/swoole/test
+sudo php server.php

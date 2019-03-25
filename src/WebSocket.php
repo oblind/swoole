@@ -1,20 +1,19 @@
 <?php
-namespace Oblind\WebSocket;
+namespace Oblind;
 
-use Swoole\Table;
 use Swoole\Server as SwooleServer;
-use Swoole\Server\Port;
 use Swoole\Server\Task;
 use Swoole\Http\Request;
-use Swoole\Http\Response;
 use Swoole\WebSocket\Frame;
 use Swoole\Websocket\Server as WebSocketServer;
 
-abstract class Server extends WebSocketServer {
+class WebSocket extends WebSocketServer {
   /**@var \Language */
   public $lang;
   /**@var string 日志路径 */
   public $logFile = 'log.txt';
+  /**@var bool $enableCoroutine */
+  public $enableCoroutine = true;
 
   function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
     parent::__construct($host, $port, $mode, $sock_type);
@@ -75,7 +74,13 @@ abstract class Server extends WebSocketServer {
   function onShutdown() {
   }
 
-  abstract function onWorkerStart(int $wid);
+  function onWorkerStart(int $wid) {
+    set_error_handler(function($errno, $errstr, $errfile, $errline) {
+      throw new \Exception($errstr, $errno);
+    });
+    if($this->enableCoroutine)
+      \Swoole\Runtime::enableCoroutine();
+  }
 
   function onWorkerStop(int $wid) {
   }
