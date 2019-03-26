@@ -47,10 +47,14 @@ class BaseModel extends Decachable implements JsonSerializable {
     }
   }
 
+  static function init() {
+    static::$dbPool = new \SplQueue;
+  }
+
   static function getDatabase(): PDO {
     if(static::$dbPool->count())
       return static::$dbPool->pop();
-    $cfg = Application::config();
+    $cfg = Application::config()->db;
     _getdb:
     try {
       $db = new PDO(
@@ -277,4 +281,4 @@ class BaseModel extends Decachable implements JsonSerializable {
   }
 }
 
-BaseModel::$dbPool = new \SplQueue;
+BaseModel::init();

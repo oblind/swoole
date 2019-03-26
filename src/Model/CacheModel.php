@@ -2,29 +2,13 @@
 namespace Oblind\Model;
 
 use Oblind\Model\CacheStatement;
-use Oblind\Cache\BaseCache;
+use Oblind\Cache\CacheTrait;
 
 abstract class CacheModel extends BaseModel {
+  use CacheTrait;
+
   protected static $pure = true;
   protected static $loaded;
-  /**@var \SplQueue */
-  protected static $cachePool;
-
-  abstract static function createCache(): BaseCache;
-
-  static function initCachePool() {
-    static::$cachePool = new \SplQueue;
-  }
-
-  static function getCache(): BaseCache {
-    if(static::$cachePool->count())
-      return static::$cachePool->pop();
-    return static::createCache();
-  }
-
-  static function putCache(BaseCache $cache) {
-    static::$cachePool->push($cache);
-  }
 
   static function __callStatic($method, $param) {
     return (new CacheStatement(get_called_class()))->$method(...$param);

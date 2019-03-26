@@ -19,6 +19,6 @@ class Application {
   }
 
   static function config(): \stdClass {
-    return static::$config;
+    return static::app()::$config;
   }
 }

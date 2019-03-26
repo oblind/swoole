@@ -8,8 +8,8 @@ class Redis extends BaseCache {
   /**@var \Redis */
   public $redis;
 
-  static function initPool() {
-    static::initPool();
+  //预置连接
+  static function initCachePool() {
     static::putCache(static::getCache());
   }
 
@@ -63,7 +63,7 @@ class Redis extends BaseCache {
   }
 
   function deleteMultiple($keys) {
-    if(!(is_array($values) || $values instanceof \Traversable))
+    if(!(is_array($keys) || $values instanceof \Traversable))
       throw new InvalidArgumentException;
     foreach($keys as $k)
       $this->delete($k);
@@ -73,3 +73,5 @@ class Redis extends BaseCache {
     return $this->keys($key) ? true : false;
   }
 }
+
+Redis::initCachePool();

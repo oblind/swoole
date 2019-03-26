@@ -4,26 +4,13 @@ namespace Oblind\Cache;
 use Psr\SimpleCache\CacheInterface;
 
 abstract class BaseCache implements CacheInterface {
-  /**@var \SplQueue */
-  protected static $pool;
+  use CacheTrait;
 
-  static function createCache() {
+  function createCache(): BaseCache {
     return new static;
-  }
-
-  static function initPool() {
-    static::$pool = new \SplQueue;
-  }
-
-  static function getCache(): BaseCache {
-    if(static::$pool->count())
-      return static::$pool->pop();
-    return static::createCache();
-  }
-
-  static function putCache(BaseCache $cache) {
-    static::$pool->push($cache);
   }
 
   abstract function keys($pattern);
 }
+
+BaseCache::initCachePool();
