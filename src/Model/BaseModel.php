@@ -72,6 +72,8 @@ class BaseModel extends Decachable implements JsonSerializable {
     } catch(\Throwable $e) {
       if($e->getCode() == 2006)
         goto _getdb;
+      else
+        throw $e;
     }
     return $db;
   }
@@ -129,6 +131,8 @@ class BaseModel extends Decachable implements JsonSerializable {
     } catch(\Throwable $e) {
       if($e->getCode() == 2006)
         goto _getdb;
+      else
+        throw $e;
     }
     static::putDatabase($db);
     return $r;
@@ -142,6 +146,8 @@ class BaseModel extends Decachable implements JsonSerializable {
     } catch(\Throwable $e) {
       if($e->getCode() == 2006)
         goto _getdb;
+      else
+        throw $e;
     }
     static::putDatabase($db);
     return $r;
@@ -265,7 +271,9 @@ class BaseModel extends Decachable implements JsonSerializable {
       } catch(\Throwable $e) {
         if($e->getCode() == 2006)
           goto _getdb;
-      }
+        else
+          throw $e;
+        }
       $this->_col = [];
       static::putDatabase($db);
     }
@@ -280,6 +288,8 @@ class BaseModel extends Decachable implements JsonSerializable {
     } catch(\Throwable $e) {
       if($e->getCode() == 2006)
         goto _getdb;
+      else
+        throw $e;
     }
     static::putDatabase($db);
     return $r;
