@@ -30,7 +30,7 @@ class Port {
     $this->http = $svr->addListener($host, $port, SWOOLE_SOCK_TCP);
     $this->router = new Router;
     $this->http->on('request', function(Request $request, Response $response) {
-      $this->onRequest($request, $response, $this->svr);
+      $this->onRequest($request, $response);
     });
   }
 
@@ -48,7 +48,7 @@ class Port {
 </html>");
   }
 
-  function onRequest(Request $request, Response $response, Server $svr) {
+  function onRequest(Request $request, Response $response) {
     if(!$this->router->dispatch($request, $response))
       $this->pageNotFound($request, $response);
   }

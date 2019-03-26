@@ -8,6 +8,7 @@ use Oblind\WebSocket as Server;
 use Oblind\Http\LanguagePort;
 use Swoole\Api\TestController;
 use Swoole\AuthMiddleware;
+use Oblind\Application;
 
 class WebSocket extends Server {
 
@@ -17,6 +18,7 @@ class WebSocket extends Server {
   }
 }
 
+$app = new Application;
 $svr = new WebSocket('0.0.0.0', 9201);
 $http = new LanguagePort($svr, '0.0.0.0', 9200);
 $http->router->addController(new IndexController, '/');

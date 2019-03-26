@@ -3,28 +3,28 @@ namespace Oblind\Http;
 
 use Swoole\Http\Request;
 use Swoole\Http\Response;
+use Oblind\Application;
 
 class Controller {
-  /**@var \stdClass */
-  static $defaultConfig;
-  /**@var \stdClass */
-  public $config;
+  /**@var Router */
+  public $router;
   /**@var Request */
   public $request;
   /**@var Response */
   public $response;
-  /**@var Route\BaseRoute */
-  public $route;
 
-  function __construct($config = null) {
-    $this->config = $config ?? static::$defaultConfig;
+  function forward(string $path, string $action, array $params = null) {
+    if($c = $this->router->controllers[$path]) {
+      $c->request = $this->request;
+      $c->response = $this->response;
+      if($params)
+        $c->request->params = $params;
+      $c->{"{$action}Action"}();
+    }
   }
 
   function view(string $filename) {
-    echo "{$this->config->viewPath}/$filename\n";
-    echo file_get_contents("{$this->config->viewPath}/$filename");
-    $this->response->sendfile("{$this->config->viewPath}/$filename");
+    $p = Application::config()->viewPath ?? './view';
+    $this->response->sendfile("$p/$filename");
   }
 }
-
-Controller::$defaultConfig = (object)['viewPath' => './view'];

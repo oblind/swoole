@@ -34,6 +34,7 @@ class Router {
       $c = ($p = strrpos($c, '/')) === false ? $c : substr($c, $p + 1);
       $c = $module == '/' ? '' : "$module/$c";
     }
+    $controller->router = $this;
     $this->controllers["/$c"] = $controller;
   }
 
@@ -79,11 +80,10 @@ class Router {
     $this->act('DELETE', $rule, $route, $name, $router);
   }
 
-  function route(Request $request, Response $response): bool {
+  function route(Request $request): bool {
     $this->curRoute = null;
     foreach($this->routes as $r)
       if($r->route($request)) {
-        $this->controllers["{$r->route['module']}\\{$r->route['controller']}"]->$r->route['action']();
         $this->curRoute = $r;
         break;
       }
@@ -94,20 +94,23 @@ class Router {
     return false;
   }
 
-  function resole(Request $request, Response $response, BaseRoute $route) {
-    $this->curRoute->controller->{"{$this->curRoute->action}Action"}($request, $response, $route);
+  function resole(Request $request, Response $response) {
+    $c = $request->controller;
+    $c->request = $request;
+    $c->response = $response;
+    $c->{"{$c->request->action}Action"}();
   }
 
   function dispatch(Request $request, Response $response): bool {
-    if($this->route($request, $response)) {
+    if($this->route($request)) {
       if($this->curRoute->middlewares) {
         $p = new Pipeline;
-        $p->send($request, $response, $this->curRoute);
+        $p->send($request, $response);
         foreach($this->curRoute->middlewares as $m)
           $p->pipe([$m, 'handle']);
         $p->then([$this, 'resole']);
       } else
-        $this->resole($request, $response, $this->curRoute);
+        $this->resole($request, $response);
       return true;
     }
     return false;

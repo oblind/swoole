@@ -6,33 +6,33 @@ use Swoole\Http\Request;
 class Restful extends BaseRoute {
 
   function route(Request $request): bool {
-    $this->action = null;
     $uri = $request->server['request_uri'];
     foreach($this->router->controllers as $n => $c) {
       $l = strlen($n);
       if($uri == $n || ($l < strlen($uri) && substr($uri, 0, $l) == $n && $uri[$l] == '/')) {
         if(($m = $request->server['request_method']) == 'GET' && method_exists($c, 'indexAction'))
-          $this->action = 'index';
+          $request->action = 'index';
         elseif($m == 'POST' && method_exists($c, 'storeAction'))
-          $this->action = 'store';
+          $request->action = 'store';
         elseif($m == 'PUT' && method_exists($c, 'updateAction'))
-          $this->action = 'update';
+          $request->action = 'update';
         elseif($m == 'DELETE' && method_exists($c, 'destroyAction'))
-          $this->action = 'destroy';
+          $request->action = 'destroy';
         else
           continue;
-        $this->controller = $c;
-        $this->params = [];
+        $request->controller = $c;
+        $request->params = [];
         $fs = static::getFields(substr($uri, $l));
         $n = count($fs);
         $i = 0;
         while($i < $n) {
-          $this->params[$fs[$i]] = $fs[$i + 1] ?? null;
+          $request->params[$fs[$i]] = $fs[$i + 1] ?? null;
           $i += 2;
         }
+        $request->route = $this;
         $c = get_class($c);
         $p = strrpos($c, '\\');
-        $this->name = lcfirst(substr($c, $p + 1, strrpos($c, 'Controller') - $p - 1)) . ucfirst($this->action);
+        $this->name = lcfirst(substr($c, $p + 1, strrpos($c, 'Controller') - $p - 1)) . ucfirst($request->action);
         return true;
       }
     }

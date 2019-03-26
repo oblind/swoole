@@ -7,18 +7,23 @@ class Application {
   /**@var \stdClass */
   protected static $config;
 
-  static function app($path = null): Application {
-    if(static::$app)
-      return static::$app;
-    if($path || ($path = 'config.json') && file_exists($path))
-      static::$config = json_decode(file_get_contents($path));
-    else
-      echo "warnning: config file $path not found\n";
-    static::$app = new static;
+  function __construct(string $configPath = 'config.json') {
+    if(file_exists($configPath)) {
+      static::$config = json_decode(file_get_contents($configPath));
+      static::$app = $this;
+    } else
+      throw new \Exception("config file $configPath not found\n");
+  }
+
+  static function app(): Application {
     return static::$app;
   }
 
   static function config(): \stdClass {
-    return static::app()::$config;
+    return static::$config;
   }
+}
+
+function app() {
+  return Application::app();
 }

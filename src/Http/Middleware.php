@@ -6,5 +6,5 @@ use Swoole\Http\Response;
 use Oblind\Http\Route\BaseRoute;
 
 abstract class Middleware {
-  abstract function handle(Request $request, Response $response, BaseRoute $route, callable $next): void;
+  abstract function handle(Request $request, Response $response, callable $next): void;
 }

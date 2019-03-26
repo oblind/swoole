@@ -10,12 +10,6 @@ abstract class BaseRoute {
   public $router;
   /**@var string */
   public $name;
-  /**@var Controller */
-  public $controller;
-  /**@var string */
-  public $action;
-  /**@var array */
-  public $params;
   /**@var array */
   public $middlewares;
 
