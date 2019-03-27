@@ -13,7 +13,7 @@ class Controller {
   /**@var Response */
   public $response;
 
-  function response($msg, $code = RES_BAD_REQUEST) {
+  function end($msg, $code = RES_BAD_REQUEST) {
     $this->response->status($code);
     $this->response->end($msg);
   }
