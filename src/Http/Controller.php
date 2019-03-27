@@ -13,6 +13,11 @@ class Controller {
   /**@var Response */
   public $response;
 
+  function response($msg, $code = RES_BAD_REQUEST) {
+    $this->response->status($code);
+    $this->response->end($msg);
+  }
+
   function forward(string $path, string $action, array $params = null) {
     if($c = $this->router->controllers[$path]) {
       $c->request = $this->request;
