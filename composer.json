@@ -15,7 +15,8 @@
   "autoload": {
     "psr-4": {
       "Oblind\\": "src/"
-    }
+    },
+    "files": ["src/helper.php"]
   },
   "bin": "bin/swoole",
   "require": {
