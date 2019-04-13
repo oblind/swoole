@@ -30,14 +30,17 @@ class Port {
 
   function pageNotFound(Request $request, Response $response) {
     $response->status(RES_NOT_FOUND);
-    $response->end("<!DOCTYPE html>
+    if($request->header['x-requested-with'] ?? 0 == 'XMLHttpRequest')
+      $response->end('page not found');
+    else
+      $response->end("<!DOCTYPE html>
 <html>
 <head>
   <meta name=\"viewport\" content=\"width=device-width\">
 </head>
 <body>
   {$request->server['request_uri']}
-  <h1>404: page not found</h1>
+  <h1>page not found</h1>
 </body>
 </html>");
   }

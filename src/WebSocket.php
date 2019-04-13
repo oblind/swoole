@@ -15,112 +15,89 @@ class WebSocket extends WebSocketServer {
 
   function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
     parent::__construct($host, $port, $mode, $sock_type);
-
-    $this->on('managerStart', function(SwooleServer $svr) {
-      $this->onManagerStart();
-    });
-
-    $this->on('shutdown', function(SwooleServer $svr) {
-      $this->onShutdown();
-    });
+    $this->set(['task_enable_coroutine' => true]);
+    foreach(['ManagerStart', 'Shutdown', 'Finish',
+      'Open', 'Close', 'Message'] as $e)
+      $this->on($e, [$this, "on$e"]);
 
     $this->on('workerStart', function(SwooleServer $svr, int $wid) {
-      if($this->taskworker)
-        $this->onTaskWorkerStart($wid);
-      else
-        $this->onWorkerStart($wid);
+      set_error_handler(function($errno, $errstr, $errfile, $errline) {
+        throw new \Exception($errstr, $errno);
+      });
+      \Swoole\Runtime::enableCoroutine();
+      if($this->taskworker) {
+        $this->logs = [];
+        $this->tick(2000, function() {
+          if($this->logs)
+            $this->writeLogs();
+        });
+        $this->onTaskWorkerStart($svr, $wid);
+      } else
+        $this->onWorkerStart($svr, $wid);
     });
 
     $this->on('workerStop', function(SwooleServer $svr, int $wid) {
-      if($this->taskworker)
-        $this->onTastWorkerStop($wid);
-      else
-        $this->onWorkerStop($wid);
-    });
-
-    $this->on('pipeMessage', function(SwooleServer $svr, $src_wid, $d) {
-      $this->onPipeMessage($src_wid, $d);
-    });
-
-    /*$this->on('task', function(SwooleServer $svr, $tid, $wid, $data) {
-      $this->onTask($tid, $wid, $data);
-    });*/
-    $this->on('task', function(SwooleServer $svr, Task $task) {
-      $this->onTask($task->id, $task->worker_id, $task->data);
-    });
-
-    $this->on('finish', function(SwooleServer $svr, int $tid, string $data) {
-      $this->onFinish($tid, $data);
-    });
-
-    $this->on('open', function(SwooleServer $svr, $req) {
-      $this->onOpen($req);
-    });
-
-    $this->on('close', function(SwooleServer $svr, int $fd, int $rid) {
-      $this->onClose($fd, $rid);
-    });
-
-    $this->on('message', function(SwooleServer $svr, Frame $f) {
-      $this->onMessage($f);
-    });
-  }
-
-  function onManagerStart() {
-  }
-
-  function onShutdown() {
-  }
-
-  function onWorkerStart(int $wid) {
-    set_error_handler(function($errno, $errstr, $errfile, $errline) {
-      throw new \Exception($errstr, $errno);
-    });
-    \Swoole\Runtime::enableCoroutine();
-  }
-
-  function onWorkerStop(int $wid) {
-  }
-
-  function onTaskWorkerStart($tid) {
-    cli_set_process_title("brk_task$tid");
-    $this->logs = [];
-    $this->tick(2000, function() {
-      if($this->logs)
+      if($this->taskworker) {
         $this->writeLogs();
+        $this->onTastWorkerStop($svr, $wid);
+      } else
+        $this->onWorkerStop($svr, $wid);
+    });
+
+    $this->on('task', function(SwooleServer $svr, Task $task) {
+      if($data = json_decode($task->data)) {
+        switch($data->cmd ?? null) {
+          case 'log':
+            $this->logs[] = date('y-m-d H:i:s') . "|$data->log\n";
+            break;
+          case 'writeLogs':
+            $this->writeLogs();
+        }
+      }
+      $this->onTask($svr, $task);
+    });
+
+    $this->on('pipeMessage', function(SwooleServer $svr, int $src_wid, $d) {
+      if($d = json_decode($d))
+        $this->onPublish($d);
+      $this->onPipeMessage($svr, $src_wid, $d);
     });
   }
 
-  function onTastWorkerStop(int $tid) {
-    $this->writeLogs();
+  function onManagerStart(SwooleServer $svr) {
   }
 
-  function onTask($tid, $wid, $data) {
-    $data = json_decode($data);
-    switch($data->cmd) {
-    case 'log':
-      $this->logs[] = date('y-m-d H:i:s') . "|$data->log\n";
-      break;
-    case 'writeLogs':
-      $this->writeLogs();
-    }
+  function onShutdown(SwooleServer $svr) {
   }
 
-  function onFinish(int $tid, string $data) {
+  function onWorkerStart(SwooleServer $svr, int $wid) {
   }
 
-  function onPipeMessage($src_wid, $d) {
-    if($d = json_decode($d))
-      $this->onPublish($d);
+  function onWorkerStop(SwooleServer $svr, int $wid) {
   }
 
-  function onOpen(Request $req) {
+  function onTaskWorkerStart(SwooleServer $svr, int $tid) {
   }
 
-  function onClose(int $fd, int $rid) {
+  function onTastWorkerStop(SwooleServer $svr, int $tid) {
   }
 
-  function onMessage(Frame $f) {
+  function onTask(SwooleServer $svr, Task $task) {
+  }
+
+  function onFinish(SwooleServer $svr, int $tid, string $data) {
+  }
+
+  function onPipeMessage(SwooleServer $svr, int $src_wid, $d) {
+  }
+
+  function onOpen(SwooleServer $svr, Request $req) {
+  }
+
+  function onClose(SwooleServer $svr, int $fd, int $rid) {
+  }
+
+  function onMessage(SwooleServer $svr, Frame $f) {
   }
 
   function push($fd, $data, $opcode = 1, $finish = true) {
@@ -153,7 +130,10 @@ class WebSocket extends WebSocketServer {
   }
 
   function log($l) {
-    $this->task(json_encode(['cmd' => 'log', 'log' => $l]));
+    if($this->taskworker)
+      $this->logs[] = date('y-m-d H:i:s') . "|$l\n";
+    else
+      $this->task(json_encode(['cmd' => 'log', 'log' => $l]));
   }
 
   function writeLogs() {

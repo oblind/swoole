@@ -35,7 +35,20 @@ class Router {
       $c = $module == '/' ? '' : "$module/$c";
     }
     $controller->router = $this;
-    $this->controllers["/$c"] = $controller;
+    $r = (object)[
+      'controller' => $controller,
+      'args' => []
+    ];
+    foreach((new \ReflectionClass($controller))->getMethods() as $m)
+      if(substr($m->name, -6) == 'Action') {
+        if($ps = $m->getParameters()) {
+          $a = [];
+          foreach($ps as $p)
+            $a[$p->name] = (string)$p->getType();
+          $r->args[substr($m->name, 0, strlen($m->name) - 6)] = $a;
+        }
+      }
+    $this->controllers["/$c"] = $r;
   }
 
   function addRewrite(string $method, string $rule, array $route, $middleware = null) {
@@ -98,16 +111,24 @@ class Router {
     $c = $request->controller;
     $c->request = $request;
     $c->response = $response;
-    $c->{"{$c->request->action}Action"}();
+    $c->{"{$c->request->action}Action"}(...($request->args ?? []));
   }
 
   function dispatch(Request $request, Response $response): bool {
     if($this->route($request)) {
+      if((($m = $request->server['request_method']) == 'POST' || $m == 'PUT') && strpos($request->header['content-type'] ?? 0, 'application/json') !== false)
+        $request->post = json_decode($request->rawContent(), true);
       if($this->curRoute->middlewares) {
         $p = new Pipeline;
         $p->send($request, $response);
-        foreach($this->curRoute->middlewares as $m)
-          $p->pipe([$m, 'handle']);
+        foreach($this->curRoute->middlewares as $m) {
+          $in = in_array($this->curRoute->name, $m->exceptions);
+          if($m->blacklistMode) {
+            if($in)
+              $p->pipe([$m, 'handle']);
+          } elseif(!$in)
+            $p->pipe([$m, 'handle']);
+        }
         $p->then([$this, 'resole']);
       } else
         $this->resole($request, $response);

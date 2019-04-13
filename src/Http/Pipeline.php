@@ -30,6 +30,7 @@ class Pipeline {
           call_user_func($cur, $request, $response, $next);
         };
       }, $resole)($this->request, $this->response);
-    }
+    } else
+      $resole($this->request, $this->response);
   }
 }

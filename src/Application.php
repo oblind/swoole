@@ -23,7 +23,3 @@ class Application {
     return static::$config;
   }
 }
-
-function app() {
-  return Application::app();
-}

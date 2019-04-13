@@ -82,11 +82,11 @@ class BaseModel extends Decachable implements JsonSerializable {
     static::$dbPool->push($db);
   }
 
-  function &__get($k) {
+  function &__get(string $k) {
     return $this->_data->$k;
   }
 
-  function __set($k, $v) {
+  function __set(string $k, $v) {
     if((!static::$cacheFields || !in_array($k, static::$cacheFields))
       && (!property_exists($this->_data, $k) || $this->_data->$k !== $v || is_array($v) || $v instanceof \stdClass)
       && !in_array($k, $this->_col))
@@ -96,11 +96,11 @@ class BaseModel extends Decachable implements JsonSerializable {
       $this->_parent->onChange($this->_parentKey);
   }
 
-  function __isset($k) {
+  function __isset(string $k) {
     return isset($this->_data->$k);
   }
 
-  function __unset($k) {
+  function __unset(string $k) {
     unset($this->_data->$k);
   }
 
@@ -108,8 +108,24 @@ class BaseModel extends Decachable implements JsonSerializable {
     return json_encode($this->jsonSerialize(), JSON_UNESCAPED_UNICODE);
   }
 
-  static function __callStatic($method, $param) {
-    return (new Statement(get_called_class()))->$method(...$param);
+  static function where($condition, $params = null): Statement {
+    return (new Statement(get_called_class()))->where($condition, $params);
+  }
+
+  static function orderBy(string $by, bool $order = false): Statement {
+    return (new Statement(get_called_class()))->orderBy($by, $order);
+  }
+
+  static function find($primary, string $col = '*') {
+    return (new Statement(get_called_class()))->find($primary, $col);
+  }
+
+  static function get(string $col = '*'): ?Collection {
+    return (new Statement(get_called_class()))->get($col);
+  }
+
+  static function first(string $col = '*') {
+    return (new Statement(get_called_class()))->first($col);
   }
 
   static function setReturnRaw($raw) {
@@ -123,7 +139,7 @@ class BaseModel extends Decachable implements JsonSerializable {
     return static::$primary;
   }
 
-  static function exec($sql): int {
+  static function exec(string $sql): int {
     _getdb:
     try {
       $db = static::getDatabase();
@@ -138,7 +154,7 @@ class BaseModel extends Decachable implements JsonSerializable {
     return $r;
   }
 
-  static function query($sql): PDOStatement {
+  static function query(string $sql): PDOStatement {
     _getdb:
     try {
       $db = static::getDatabase();
@@ -157,7 +173,7 @@ class BaseModel extends Decachable implements JsonSerializable {
     return static::exec('alter table ' . static::getTableName() . ' auto_increment=1');
   }
 
-  static function setCache($field, $cached) {
+  static function setCache(string $field, bool $cached) {
     if($cached) {
       if(!in_array($field, static::$cacheFields))
         static::$cacheFields[] = $field;
@@ -172,7 +188,7 @@ class BaseModel extends Decachable implements JsonSerializable {
       static::$hidden[] = $hidden;
   }
 
-  protected static function hideFields($d, $class) {
+  protected static function hideFields($d, string $class) {
     foreach($class::$hidden as $f)
       if(property_exists($d, $f))
         unset($d->$f);
@@ -213,7 +229,15 @@ class BaseModel extends Decachable implements JsonSerializable {
       return $this->_data;
   }
 
-  static function getTableName() {
+  static function setTableName(string $class, string $tableName = null) {
+    if(!$tableName) {
+      $tableName = $class;
+      $class = get_called_class();
+    }
+    static::$tableNames[$class] = $tableName;
+  }
+
+  static function getTableName(): string {
     $cn = get_called_class();
     if(!isset(static::$tableNames[$cn])) {
       $s = $cn;

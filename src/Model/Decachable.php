@@ -2,6 +2,7 @@
 namespace Oblind\Model;
 
 abstract class Decachable {
+  /**@var \stdClass */
   protected $_data;
   protected $_parent;
   protected $_parentKey;

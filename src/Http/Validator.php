@@ -54,11 +54,11 @@ class Validator {
   static function confirmed($value, ?array $arg, &$err, $values, $field): bool {
     $r = $value == ($values[$field.'_confirmation'] ?? null);
     if(!$r)
-      $err = _(':attribute inconsistent');
+      $err = _('inconsistent :attribute and confirmation :attribute');
     return $r;
   }
 
-  protected static function val(array $values, string $field, string $rule, &$err): bool {
+  protected static function val(array $values, string $field, string $rule, &$err, array $fields): bool {
     if($l = strpos($rule, ':')) {
       $a = [];
       $q = $l + 1;
@@ -73,37 +73,30 @@ class Validator {
     if($rule == 'required') {
       $r = isset($values[$field]);
       if(!$r)
-        $err = str_replace(':attribute', _(static::$fields[$field] ?? $field), _(':attribute required'));
+        $err = str_replace(':attribute', _($fields[$field] ?? static::$fields[$field] ?? $field), _(':attribute required'));
       return $r;
     }
     elseif(isset($values[$field]) && !static::$rule($values[$field], $a, $err, $values, $field)) {
-      $err = str_replace(':attribute', _(static::$fields[$field] ?? $field), $err);
+      $err = str_replace(':attribute', _($fields[$field] ?? static::$fields[$field] ?? $field), $err);
       return false;
     }
     return true;
   }
 
-  static function valid(array $values, array $rules, &$err): bool {
+  static function valid(array $values, array $rules, &$err, array $fields = []): bool {
     foreach($rules as $field => $r) {
       $n = 0;
       while(($m = strpos($r, '|', $n)) != false) {
-        if(!static::val($values, $field, substr($r, $n, $m - $n), $err))
+        if(!static::val($values, $field, substr($r, $n, $m - $n), $err, $fields))
           return false;
         $n = $m + 1;
       }
-      if(!static::val($values, $field, substr($r, $n), $err))
+      if(!static::val($values, $field, substr($r, $n), $err, $fields))
         return false;
     }
     return true;
   }
 }
-
-Validator::setFields([
-  'name' => _('name'),
-  'email' => _('email'),
-  'password' => _('password'),
-  'password_confirmation' => _('confirmation')
-]);
 
 Language::addTranslation([
   'name' => '用户名',
@@ -114,6 +107,13 @@ Language::addTranslation([
   ':attribute maximal length %d' => ':attribute 最多 %d 个字符',
   ':attribute length between %d-%d' => ':attribute 长度范围 %d-%d',
   ':attribute format invalid' => ':attribute 格式错误',
-  ':attribute inconsistent' => ':attribute 不相符',
+  'inconsistent :attribute and confirmation :attribute' => ':attribute 和 确认:attribute 不一致',
   ':attribute required' => '请输入 :attribute'
 ], 'zh-cn');
+
+Validator::setFields([
+  'name' => _('name'),
+  'email' => _('email'),
+  'password' => _('password'),
+  'password_confirmation' => _('confirmation')
+]);

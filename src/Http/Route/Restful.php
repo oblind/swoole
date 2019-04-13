@@ -7,10 +7,16 @@ class Restful extends BaseRoute {
 
   function route(Request $request): bool {
     $uri = $request->server['request_uri'];
-    foreach($this->router->controllers as $n => $c) {
+    foreach($this->router->controllers as $n => $r) {
       $l = strlen($n);
+      $c = $r->controller;
       if($uri == $n || ($l < strlen($uri) && substr($uri, 0, $l) == $n && $uri[$l] == '/')) {
-        if(($m = $request->server['request_method']) == 'GET' && method_exists($c, 'indexAction'))
+        $fs = static::getFields(substr($uri, $l));
+        $i = 0;
+        if($fs && method_exists($c, "{$fs[0]}Action")) {
+          $request->action = $fs[0];
+          $i = 1;
+        } elseif(($m = $request->server['request_method']) == 'GET' && method_exists($c, 'indexAction'))
           $request->action = 'index';
         elseif($m == 'POST' && method_exists($c, 'storeAction'))
           $request->action = 'store';
@@ -22,13 +28,18 @@ class Restful extends BaseRoute {
           continue;
         $request->controller = $c;
         $request->params = [];
-        $fs = static::getFields(substr($uri, $l));
         $n = count($fs);
-        $i = 0;
+        foreach($r->args as $m => $ts)
+          if($m == $request->action) {
+            foreach($ts as $t)
+              $request->args[] = $i < $n ? ($t == 'int' ? intval($fs[$i]) : $fs[$i]) : null;
+              $i++;
+            break;
+          }
         while($i < $n) {
           $request->params[$fs[$i]] = $fs[$i + 1] ?? null;
           $i += 2;
-        }
+        }  
         $request->route = $this;
         $c = get_class($c);
         $p = strrpos($c, '\\');

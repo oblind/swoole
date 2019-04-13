@@ -3,8 +3,23 @@ namespace Oblind\Http;
 
 use Swoole\Http\Request;
 use Swoole\Http\Response;
-use Oblind\Http\Route\BaseRoute;
 
 abstract class Middleware {
+  /**@var array */
+  public $exceptions;
+  /**@var bool */
+  public $blacklistMode;
+
+  /**
+   * 中间件过滤器
+   *
+   * @param array $exceptions 例外情况列表
+   * @param boolean $black 黑名单模式
+   */
+  function __construct(array $exceptions = [], bool $blacklistMode = false) {
+    $this->exceptions = $exceptions;
+    $this->blacklistMode = $blacklistMode;
+  }
+
   abstract function handle(Request $request, Response $response, callable $next): void;
 }

@@ -8,8 +8,11 @@ use Oblind\Language;
 class LanguagePort extends Port {
   function pageNotFound(Request $request, Response $response) {
     $response->status(RES_NOT_FOUND);
-    $e = _('404: page not found');
-    $response->end("<!DOCTYPE html>
+    $e = _('page not found');
+    if($request->header['x-requested-with'] ?? 0 == 'XMLHttpRequest')
+      $response->end($e);
+    else
+      $response->end("<!DOCTYPE html>
 <html>
 <head>
   <meta name=\"viewport\" content=\"width=device-width\">
@@ -31,5 +34,5 @@ class LanguagePort extends Port {
   }
 }
 
-Language::addTranslation(['404: page not found' => '很抱歉, 您要访问的页面不存在 !'], 'zh-cn');
-Language::addTranslation(['404: page not found' => '很抱歉，您要訪問的頁面不存在 !'], 'zh-tw');
+Language::addTranslation(['page not found' => '很抱歉, 您要访问的页面不存在 !'], 'zh-cn');
+Language::addTranslation(['page not found' => '很抱歉，您要訪問的頁面不存在 !'], 'zh-tw');
