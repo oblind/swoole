@@ -1,13 +1,4 @@
 <?php
-class A {
-  public $a;
-
-  function f(array $a) {
-    $this->a = array_merge($this->a ?: [], $a, null);
-    var_dump($this->a);
-  }
-}
-
-$a = new A;
-$a->f([3]);
-$a->f([5]);
+//1: gif, 2: jpg, 3: png, 其他: bmp
+$t = 2;
+echo $t == 1 ? 'gif' : ($t == 2 ? 'jpg' : ($t == 3 ? 'png' : 'bmp'));
