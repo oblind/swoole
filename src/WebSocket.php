@@ -16,7 +16,7 @@ class WebSocket extends WebSocketServer {
   function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
     parent::__construct($host, $port, $mode, $sock_type);
     $this->set(['task_enable_coroutine' => true]);
-    foreach(['ManagerStart', 'Shutdown', 'Finish',
+    foreach(['Start', 'Shutdown', 'ManagerStart', 'Finish',
       'Open', 'Close', 'Message'] as $e)
       $this->on($e, [$this, "on$e"]);
 
@@ -64,10 +64,13 @@ class WebSocket extends WebSocketServer {
     });
   }
 
-  function onManagerStart(SwooleServer $svr) {
+  function onStart(SwooleServer $svr) {
   }
 
   function onShutdown(SwooleServer $svr) {
+  }
+
+  function onManagerStart(SwooleServer $svr) {
   }
 
   function onWorkerStart(SwooleServer $svr, int $wid) {
