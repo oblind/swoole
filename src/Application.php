@@ -16,7 +16,7 @@ class Application {
   /**@var \stdClass */
   protected static $config;
   /**@var string */
-  protected static $prefix;
+  public static $prefix;
 
   static function app(): Application {
     return static::$app;
@@ -71,4 +71,8 @@ class Application {
       $this->onStart();
     }
   }
+}
+
+function app() {
+  return Application::app();
 }

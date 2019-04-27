@@ -8,13 +8,16 @@ use Swoole\WebSocket\Frame;
 use Swoole\Websocket\Server as WebSocketServer;
 
 class WebSocket extends WebSocketServer {
-  /**@var \Language */
-  public $lang;
   /**@var string 日志路径 */
-  public $logFile = 'log.txt';
+  public $logFile = 'log/log.txt';
+  /**@var int 日志文件大小, 超出后会被压缩存档 */
+  public $logFileSize = 0x40000;
 
   function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
     parent::__construct($host, $port, $mode, $sock_type);
+    $p = dirname($this->logFile);
+    if(!is_dir($p)) //建立日志目录
+      mkdir($p);
     $this->set(['task_enable_coroutine' => true]);
     foreach(['Start', 'Shutdown', 'ManagerStart', 'Finish',
       'Open', 'Close', 'Message'] as $e)
@@ -143,16 +146,16 @@ class WebSocket extends WebSocketServer {
     if($this->taskworker) {
       //清除文件缓存, 否则filesize 返回值不变
       clearstatcache();
-      //超过256K压缩存档
-      if(file_exists($this->logFile) && filesize($this->logFile) >= 0x40000) {
+      //日志文件超过限制后压缩存档
+      if(file_exists($this->logFile) && filesize($this->logFile) >= $this->logFileSize) {
         $i = 0;
-        $f0 = '../log/brake.log';
-        while(file_exists($f = "../log/brake$i.log.bz2"))
+        $p = dirname(realpath($this->logFile)) . '/' . Application::app()::$prefix;
+        while(file_exists($f =  "$p$i.log.bz2"))
           $i++;
         if($bz = bzopen($f, 'w')) {
-          bzwrite($bz, file_get_contents($f0));
+          bzwrite($bz, file_get_contents($this->logFile));
           bzclose($bz);
-          unlink($f0);
+          unlink($this->logFile);
         }
       }
       foreach($this->logs as $l)
