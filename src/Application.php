@@ -16,7 +16,7 @@ class Application {
   /**@var \stdClass */
   protected static $config;
   /**@var string */
-  public static $prefix;
+  public static $prefix = 'app';
 
   static function app(): Application {
     return static::$app;

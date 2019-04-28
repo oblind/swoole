@@ -19,24 +19,36 @@ class WebSocket extends WebSocketServer {
     if(!is_dir($p)) //建立日志目录
       mkdir($p);
     $this->set(['task_enable_coroutine' => true]);
-    foreach(['Start', 'Shutdown', 'ManagerStart', 'Finish',
-      'Open', 'Close', 'Message'] as $e)
+    foreach(['Shutdown', 'Finish', 'Open', 'Close', 'Message'] as $e)
       $this->on($e, [$this, "on$e"]);
 
+    $this->on('start', function(SwooleServer $svr) {
+      cli_set_process_title(Application::app()::$prefix . '_master');
+      $this->onStart($svr);
+    });
+
+    $this->on('managerStart', function(SwooleServer $svr) {
+      cli_set_process_title(Application::app()::$prefix . '_manager');
+      $this->onManagerStart($svr);
+    });
+
     $this->on('workerStart', function(SwooleServer $svr, int $wid) {
-      set_error_handler(function($errno, $errstr, $errfile, $errline) {
+      set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline) {
         throw new \Exception($errstr, $errno);
       });
       \Swoole\Runtime::enableCoroutine();
       if($this->taskworker) {
+        cli_set_process_title(Application::app()::$prefix . "_task$wid");
         $this->logs = [];
         $this->tick(2000, function() {
           if($this->logs)
             $this->writeLogs();
         });
         $this->onTaskWorkerStart($svr, $wid);
-      } else
+      } else {
+        cli_set_process_title(Application::app()::$prefix . "_worker$wid");
         $this->onWorkerStart($svr, $wid);
+      }
     });
 
     $this->on('workerStop', function(SwooleServer $svr, int $wid) {
@@ -48,10 +60,10 @@ class WebSocket extends WebSocketServer {
     });
 
     $this->on('task', function(SwooleServer $svr, Task $task) {
-      if($data = json_decode($task->data)) {
-        switch($data->cmd ?? null) {
+      if($d = json_decode($task->data)) {
+        switch($d->cmd ?? null) {
           case 'log':
-            $this->logs[] = date('y-m-d H:i:s') . "|$data->log\n";
+            $this->addLog($d->log);
             break;
           case 'writeLogs':
             $this->writeLogs();
@@ -131,19 +143,19 @@ class WebSocket extends WebSocketServer {
   function onPublish($d) {
   }
 
-  function trans(string $k): string {
-    return $this->lang[$k];
+  protected function addLog($l) {
+    $this->logs[] = '[' . date(DATE_ATOM) . "] $l\n";
   }
 
-  function log($l) {
-    if($this->taskworker)
-      $this->logs[] = date('y-m-d H:i:s') . "|$l\n";
+  function log(string $l, bool $force = false) {
+    if($this->taskworker && $this->worker_id == $this->setting['worker_num'] || $force)
+      $this->addLog($l);
     else
-      $this->task(json_encode(['cmd' => 'log', 'log' => $l]));
+      $this->task(json_encode(['cmd' => 'log', 'log' => $l]), 0);
   }
 
-  function writeLogs() {
-    if($this->taskworker) {
+  function writeLogs(bool $force = false) {
+    if($this->taskworker || $force) {
       //清除文件缓存, 否则filesize 返回值不变
       clearstatcache();
       //日志文件超过限制后压缩存档
@@ -162,7 +174,7 @@ class WebSocket extends WebSocketServer {
         error_log($l, 3, $this->logFile);
       $this->logs = [];
     } else
-      $this->task(json_encode(['cmd' => 'writeLogs']));
+      $this->task(json_encode(['cmd' => 'writeLogs']), 0);
   }
 
   function restart() {
