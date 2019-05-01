@@ -4,6 +4,7 @@ require './controller/IndexController.php';
 require './controller/Api/TestController.php';
 require './middleware/AuthMiddleware.php';
 
+use Swoole\Server as SwooleServer;
 use Oblind\WebSocket as Server;
 use Oblind\Http\LanguagePort;
 use Swoole\Api\TestController;
@@ -12,8 +13,7 @@ use Oblind\Application;
 
 class WebSocket extends Server {
 
-  function onWorkerStart(int $wid) {
-    parent::onWorkerStart($wid);
+  function onWorkerStart(SwooleServer $svr, int $wid) {
     echo "$wid worker start\n";
   }
 }
