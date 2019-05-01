@@ -39,10 +39,11 @@ class Restful extends BaseRoute {
         while($i < $n) {
           $request->params[$fs[$i]] = $fs[$i + 1] ?? null;
           $i += 2;
-        }  
+        }
         $request->route = $this;
         $c = get_class($c);
         $p = strrpos($c, '\\');
+        if($p === false) $p = -1;
         $this->name = lcfirst(substr($c, $p + 1, strrpos($c, 'Controller') - $p - 1)) . ucfirst($request->action);
         return true;
       }

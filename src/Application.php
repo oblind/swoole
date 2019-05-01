@@ -43,6 +43,7 @@ class Application {
       if($pid) {
         echo "stopping, pid: $pid\n";
         Process::kill($pid);
+        sleep(1);
         if(static::$prefix) {
           exec('ps aux|grep ' . static::$prefix . '_', $r);
           if(($c = count($r) - 2) > 0) {
@@ -61,8 +62,6 @@ class Application {
     } elseif($pid)
       exit;
     if($cmd == static::START || $cmd == static::RESTART) {
-      if($pid)
-        sleep(1);
       if(file_exists(static::$configFile)) {
         static::$config = json_decode(file_get_contents(static::$configFile));
         static::$app = $this;
