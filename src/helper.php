@@ -1,4 +1,7 @@
 <?php
+
+use Oblind\Application;
+
 const RES_BAD_REQUEST = 400;
 const RES_NO_PERMISSION = 401;
 const RES_FORBIDEN = 403;
@@ -16,4 +19,8 @@ function base64url_decode(string $s): string {
   if($l = strlen($s) % 4)
     $s .= str_repeat('=', 4 - $l);
   return base64_decode(str_replace('_', '/', str_replace('-', '+', $s)));
+}
+
+function app() {
+  return Application::app();
 }

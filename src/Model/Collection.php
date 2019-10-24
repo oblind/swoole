@@ -65,8 +65,9 @@ class Collection extends Decachable implements ArrayAccess, Countable, IteratorA
 
   function jsonSerialize() {
     $r = [];
-    foreach($this->_data as $v)
-      $r[] = $v instanceof JsonSerializable ? $v->jsonSerialize() : $v;
+    if($this->_data)
+      foreach($this->_data as $v)
+        $r[] = $v instanceof JsonSerializable ? $v->jsonSerialize() : $v;
     return $r;
   }
 

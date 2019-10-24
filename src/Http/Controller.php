@@ -13,10 +13,23 @@ class Controller {
   /**@var Response */
   public $response;
 
+  function write($msg) {
+    if(is_object($msg) || is_array($msg))
+      $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
+    $this->response->write($msg);
+  }
+
   function end($msg = null) {
     if(is_object($msg) || is_array($msg))
       $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
-    $this->response->end($msg);
+    $l = strlen($msg);
+    if($l > 160 * 1024) { //过大, 以文件形式发送
+      $f = tmpfile();
+      fwrite($f, $msg);
+      $this->response->sendfile(stream_get_meta_data($f)['uri']);
+      fclose($f);
+    } else
+      $this->response->end($msg);
   }
 
   function error($msg, $code = RES_BAD_REQUEST) {

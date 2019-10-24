@@ -58,7 +58,7 @@ class Router {
         $route['middleware'] = array_merge($route['middleware'], $middleware);
       else
         $route['middleware'] = $middleware;
-    $this->$routes[] = new Route\Rewrite($this, $rule, $route);
+    $this->routes[] = new Route\Rewrite($this, $rule, $route);
   }
 
   function middleware(Middleware $middleware, Closure $callback) {
@@ -98,12 +98,12 @@ class Router {
     foreach($this->routes as $r)
       if($r->route($request)) {
         $this->curRoute = $r;
-        break;
+        return true;
       }
-    if(!$this->curRoute && $this->defaultRoute->route($request))
+    if($this->defaultRoute->route($request)) {
       $this->curRoute = $this->defaultRoute;
-    if($this->curRoute)
       return true;
+    }
     return false;
   }
 

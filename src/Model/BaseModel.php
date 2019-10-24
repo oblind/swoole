@@ -51,14 +51,19 @@ class BaseModel extends Decachable implements JsonSerializable {
     static::$dbPool = new \SplQueue;
   }
 
+  static function goneAway(\Throwable $e) {
+    return strpos($e->getMessage(), 'MySQL server has gone away');
+  }
+
   static function getDatabase(): PDO {
     if(static::$dbPool->count())
       return static::$dbPool->pop();
-    $cfg = Application::config()->db;
+    $cfg = Application::config()['db'];
+    $gone = false;
     _getdb:
     try {
       $db = new PDO(
-        "$cfg->type:host=$cfg->host;port=$cfg->port;dbname=$cfg->database", $cfg->user, $cfg->password, [
+        "{$cfg['type']}:host={$cfg['host']};port={$cfg['port']};dbname={$cfg['database']}", $cfg['user'], $cfg['password'], [
           //持久连接
           PDO::ATTR_PERSISTENT => true,
           //返回对象, FETCH_ASSOC: 返回数组
@@ -70,9 +75,10 @@ class BaseModel extends Decachable implements JsonSerializable {
         ]
       );
     } catch(\Throwable $e) {
-      if($e->getCode() == 2006)
+      if(static::goneAway($e) && !$gone) {
+        $gone = true;
         goto _getdb;
-      else
+      } else
         throw $e;
     }
     return $db;
@@ -116,6 +122,10 @@ class BaseModel extends Decachable implements JsonSerializable {
     return (new Statement(get_called_class()))->orderBy($by, $order);
   }
 
+  static function limit(int $offset, int $rows = null): Statement {
+    return (new Statement(get_called_class()))->limit($offset, $rows);
+  }
+
   static function find($primary, string $col = '*') {
     return (new Statement(get_called_class()))->find($primary, $col);
   }
@@ -124,8 +134,12 @@ class BaseModel extends Decachable implements JsonSerializable {
     return (new Statement(get_called_class()))->get($col);
   }
 
-  static function first(string $col = '*') {
+  static function first(string $col = '*'): ?BaseModel {
     return (new Statement(get_called_class()))->first($col);
+  }
+
+  static function count(): int {
+    return (new Statement(get_called_class()))->count();
   }
 
   static function setReturnRaw($raw) {
@@ -140,14 +154,16 @@ class BaseModel extends Decachable implements JsonSerializable {
   }
 
   static function exec(string $sql): int {
+    $gone = false;
     _getdb:
     try {
       $db = static::getDatabase();
       $r = $db->exec($sql);
     } catch(\Throwable $e) {
-      if($e->getCode() == 2006)
+      if(static::goneAway($e) && !$gone) {
+        $gone = true;
         goto _getdb;
-      else
+      } else
         throw $e;
     }
     static::putDatabase($db);
@@ -155,14 +171,16 @@ class BaseModel extends Decachable implements JsonSerializable {
   }
 
   static function query(string $sql): PDOStatement {
+    $gone = false;
     _getdb:
     try {
       $db = static::getDatabase();
       $r = $db->query($sql);
     } catch(\Throwable $e) {
-      if($e->getCode() == 2006)
+      if(static::goneAway($e) && !$gone) {
+        $gone = true;
         goto _getdb;
-      else
+      } else
         throw $e;
     }
     static::putDatabase($db);
@@ -271,6 +289,7 @@ class BaseModel extends Decachable implements JsonSerializable {
     if($this->_col) {
       foreach($this->_col as $c)
         $v[] = static::$jsonFields && in_array($c, static::$jsonFields) ? json_encode($this->$c, JSON_UNESCAPED_UNICODE) : $this->$c;
+      $gone = false;
       _getdb:
       try {
         $db = static::getDatabase();
@@ -280,7 +299,7 @@ class BaseModel extends Decachable implements JsonSerializable {
             $cs[] = "`$c`";
           $s = $db->prepare('insert into ' . static::getTableName() . ' (' . implode(', ', $cs) . ') values (' . implode(', ', array_fill(0, count($this->_col), '?')) . ')');
           $s->execute($v);
-          if($primary = $db->lastInsertId())
+          if($primary = intval($db->lastInsertId()))
             $this->{static::$primary} = $primary;
           $this->_create = false;
         } else {
@@ -293,11 +312,12 @@ class BaseModel extends Decachable implements JsonSerializable {
           $r = $s->execute($v);
         }
       } catch(\Throwable $e) {
-        if($e->getCode() == 2006)
+        if(static::goneAway($e) && !$gone) {
+          $gone = true;
           goto _getdb;
-        else
-          throw $e;
-        }
+        } else
+            throw $e;
+      }
       $this->_col = [];
       static::putDatabase($db);
     }
@@ -305,14 +325,16 @@ class BaseModel extends Decachable implements JsonSerializable {
   }
 
   function delete() {
+    $gone = false;
     _getdb:
     try {
       $db = static::getDatabase();
       $r = $db->exec('delete from ' . static::getTableName() . ' where ' . static::$primary . '=' . $this->{static::$primary});
     } catch(\Throwable $e) {
-      if($e->getCode() == 2006)
+      if(static::goneAway($e) && !$gone) {
+        $gone = true;
         goto _getdb;
-      else
+      } else
         throw $e;
     }
     static::putDatabase($db);

@@ -13,7 +13,7 @@ class Application {
   public static $configFile = 'config.json';
   /**@var string */
   public static $pidFile = 'server.pid';
-  /**@var \stdClass */
+  /**@var array */
   protected static $config;
   /**@var string */
   public static $prefix = 'app';
@@ -22,7 +22,7 @@ class Application {
     return static::$app;
   }
 
-  static function config(): \stdClass {
+  static function config(): array {
     return static::$config;
   }
 
@@ -63,15 +63,11 @@ class Application {
       exit;
     if($cmd == static::START || $cmd == static::RESTART) {
       if(file_exists(static::$configFile)) {
-        static::$config = json_decode(file_get_contents(static::$configFile));
+        static::$config = json_decode(file_get_contents(static::$configFile), true);
         static::$app = $this;
       } else
         throw new \Exception('config file ' . static::$configFile . " not found\n");
       $this->onStart();
     }
   }
-}
-
-function app() {
-  return Application::app();
 }

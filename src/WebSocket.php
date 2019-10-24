@@ -5,13 +5,45 @@ use Swoole\Server as SwooleServer;
 use Swoole\Server\Task;
 use Swoole\Http\Request;
 use Swoole\WebSocket\Frame;
-use Swoole\Websocket\Server as WebSocketServer;
+use Swoole\Websocket\Server as SwooleWebSocket;
 
-class WebSocket extends WebSocketServer {
+const ERROR_STRING = [
+  E_ERROR => 'E_ERROR',
+  E_WARNING => 'E_WARNING',
+  E_PARSE => 'E_PARSE',
+  E_NOTICE => 'E_NOTICE',
+  E_CORE_ERROR => 'E_CORE_ERROR',
+  E_CORE_WARNING => 'E_CORE_WARNING',
+  E_COMPILE_ERROR => 'E_COMPILE_ERROR',
+  E_COMPILE_WARNING => 'E_COMPILE_WARNING',
+  E_USER_ERROR => 'E_USER_ERROR',
+  E_USER_NOTICE => 'E_USER_NOTICE',
+  E_STRICT => 'E_STRICT',
+  E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
+  E_DEPRECATED => 'E_DEPRECATED',
+];
+const E_FATAL = E_ERROR | E_USER_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
+
+abstract class WebSocket extends SwooleWebSocket {
+  const MAX_TABLE_SIZE = 1024;
+
   /**@var string 日志路径 */
   public $logFile = 'log/log.txt';
   /**@var int 日志文件大小, 超出后会被压缩存档 */
   public $logFileSize = 0x40000;
+
+  /**@var \Swoole\Table */
+  public $tblProds;
+  /**@var \Swoole\Table */
+  public $tblUsers;
+  /**@var array */
+  public $prods = [];
+  /**@var array */
+  public $users = [];
+  /**@var array */
+  public $guests = [];
+  /**@var bool */
+  public $init = false;
 
   function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
     parent::__construct($host, $port, $mode, $sock_type);
@@ -20,7 +52,10 @@ class WebSocket extends WebSocketServer {
       mkdir($p);
     $this->set(['task_enable_coroutine' => true]);
     foreach(['Shutdown', 'Finish', 'Open', 'Close', 'Message'] as $e)
-      $this->on($e, [$this, "on$e"]);
+      $this->on($e, function(SwooleWebSocket $svr, ...$args) use($e) {
+        $e = "on$e";
+        $this->$e(...$args);
+      });
 
     $this->on('start', function(SwooleServer $svr) {
       cli_set_process_title(Application::app()::$prefix . '_master');
@@ -33,8 +68,18 @@ class WebSocket extends WebSocketServer {
     });
 
     $this->on('workerStart', function(SwooleServer $svr, int $wid) {
+      //将普通错误转为异常
       set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline) {
         throw new \Exception($errstr, $errno);
+      });
+      //记录致命错误
+      register_shutdown_function(function() {
+        $e = error_get_last();
+        //if($e && ($e['type'] & E_FATAL)) {
+        if($e) {
+          //$this->log(ERROR_STRING[$e['type']] . ": {$e['message']} in {$e['file']}:{$e['line']}", true);
+          echo ERROR_STRING[$e['type']] . ": {$e['message']} in {$e['file']}:{$e['line']}\n";
+        }
       });
       \Swoole\Runtime::enableCoroutine();
       if($this->taskworker) {
@@ -44,19 +89,19 @@ class WebSocket extends WebSocketServer {
           if($this->logs)
             $this->writeLogs();
         });
-        $this->onTaskWorkerStart($svr, $wid);
+        $this->onTaskWorkerStart($wid);
       } else {
         cli_set_process_title(Application::app()::$prefix . "_worker$wid");
-        $this->onWorkerStart($svr, $wid);
+        $this->onWorkerStart($wid);
       }
     });
 
     $this->on('workerStop', function(SwooleServer $svr, int $wid) {
       if($this->taskworker) {
         $this->writeLogs();
-        $this->onTastWorkerStop($svr, $wid);
+        $this->onTastWorkerStop($wid);
       } else
-        $this->onWorkerStop($svr, $wid);
+        $this->onWorkerStop($wid);
     });
 
     $this->on('task', function(SwooleServer $svr, Task $task) {
@@ -69,57 +114,57 @@ class WebSocket extends WebSocketServer {
             $this->writeLogs();
         }
       }
-      $this->onTask($svr, $task);
+      $this->onTask($task);
     });
 
     $this->on('pipeMessage', function(SwooleServer $svr, int $src_wid, $d) {
       if($d = json_decode($d))
         $this->onPublish($d);
-      $this->onPipeMessage($svr, $src_wid, $d);
+      $this->onPipeMessage($src_wid, $d);
     });
   }
 
-  function onStart(SwooleServer $svr) {
+  function onStart() {
   }
 
-  function onShutdown(SwooleServer $svr) {
+  function onShutdown() {
   }
 
-  function onManagerStart(SwooleServer $svr) {
+  function onManagerStart() {
   }
 
-  function onWorkerStart(SwooleServer $svr, int $wid) {
+  function onWorkerStart(int $wid) {
   }
 
-  function onWorkerStop(SwooleServer $svr, int $wid) {
+  function onWorkerStop(int $wid) {
   }
 
-  function onTaskWorkerStart(SwooleServer $svr, int $tid) {
+  function onTaskWorkerStart(int $tid) {
   }
 
-  function onTastWorkerStop(SwooleServer $svr, int $tid) {
+  function onTastWorkerStop(int $tid) {
   }
 
-  function onTask(SwooleServer $svr, Task $task) {
+  function onTask(Task $task) {
   }
 
-  function onFinish(SwooleServer $svr, int $tid, string $data) {
+  function onFinish(int $tid, string $data) {
   }
 
-  function onPipeMessage(SwooleServer $svr, int $src_wid, $d) {
+  function onPipeMessage(int $src_wid, $d) {
   }
 
-  function onOpen(SwooleServer $svr, Request $req) {
+  function onOpen(Request $req) {
   }
 
-  function onClose(SwooleServer $svr, int $fd, int $rid) {
+  function onClose(int $fd, int $rid) {
   }
 
-  function onMessage(SwooleServer $svr, Frame $f) {
-  }
+  abstract function onMessage(Frame $f);
 
-  function push($fd, $data, $opcode = 1, $finish = true) {
-    return ($info = $this->getClientInfo($fd)) && ($info['websocket_status'] ?? 0) ? parent::push($fd, $data, $opcode, $finish) : false;
+  function push($fd, $data, $opcode = NULL, $finish = NULL) {
+    if($this->isEstablished($fd))
+      parent::push($fd, (is_array($data) || is_object($data) ? json_encode($data, JSON_UNESCAPED_UNICODE) : $data) . "\n", $opcode, $finish);
   }
 
   static function toObj(&$a) {
@@ -130,11 +175,15 @@ class WebSocket extends WebSocketServer {
     return $a;
   }
 
-  function publish($d) {
-    if(is_array($d))
-      $d = static::toObj($d);
+  function publish(?string $dest, string $cmd, $data) {
+    if(is_array($data))
+      $data = static::toObj($data);
+    $d = new \stdClass;
+    $d->dest = $dest;
+    $d->cmd = $cmd;
+    $d->data = $data;
     $m = json_encode($d);
-    for($i = 0, $c = swoole_cpu_num(); $i < $c; $i++)
+    for($i = 0, $c = $this->setting['worker_num']; $i < $c; $i++)
       if($i != $this->worker_id)
         $this->sendMessage($m, $i);
     $this->onPublish($d);
@@ -179,6 +228,6 @@ class WebSocket extends WebSocketServer {
 
   function restart() {
     $this->log('RESTARTING...');
-    $this->publish(['cmd' => 'restart']);
+    $this->publish(null, 'restart', null);
   }
 }

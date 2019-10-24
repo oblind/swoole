@@ -14,10 +14,12 @@ trait CacheTrait {
   static function getCache(): BaseCache {
     if(static::$pool->count())
       return static::$pool->pop();
-    return new static;
+    return static::createCache();
   }
 
   static function putCache(BaseCache $cache) {
     static::$pool->push($cache);
   }
 }
+
+CacheTrait::initCachePool();

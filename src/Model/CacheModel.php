@@ -10,8 +10,24 @@ abstract class CacheModel extends BaseModel {
   protected static $pure = true;
   protected static $loaded;
 
-  static function __callStatic($method, $param) {
-    return (new CacheStatement(get_called_class()))->$method(...$param);
+  static function where($condition, $params = null): Statement {
+    return (new CacheStatement(get_called_class()))->where($condition, $params);
+  }
+
+  static function orderBy(string $by, bool $order = false): Statement {
+    return (new CacheStatement(get_called_class()))->orderBy($by, $order);
+  }
+
+  static function find($primary, string $col = '*') {
+    return (new CacheStatement(get_called_class()))->find($primary, $col);
+  }
+
+  static function get(string $col = '*'): ?Collection {
+    return (new CacheStatement(get_called_class()))->get($col);
+  }
+
+  static function first(string $col = '*'): ?BaseModel {
+    return (new CacheStatement(get_called_class()))->first($col);
   }
 
   static function clear() {

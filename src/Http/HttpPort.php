@@ -3,10 +3,10 @@ namespace Oblind\Http;
 
 use Swoole\Http\Request;
 use Swoole\Http\Response;
-use Swoole\WebSocket\Server;
+use Swoole\Server;
 
-class Port {
-  /**@var \Swoole\Websocket\Server */
+class HttpPort {
+  /**@var \Swoole\Server */
   public $svr;
   /**@var string */
   public $host;
@@ -17,25 +17,15 @@ class Port {
   /**@var Router */
   public $router;
 
-  function __construct(Server $svr, string $host = 'localhost', int $port = 0) {
+  function __construct(Server $svr, string $host, int $port, int $type = SWOOLE_SOCK_TCP) {
     $this->svr = $svr;
     $this->host = $host;
     $this->port = $port;
-    $this->http = $svr->addListener($host, $port, SWOOLE_SOCK_TCP);
-    $this->http->set([
-      'open_http_protocol' => true,
-      'package_max_length' => 0x18000000,  //1.5M
-    ]);
-    var_dump($this->http->setting);
+    $this->http = $svr->addListener($host, $port, $type);
     $this->router = new Router;
     $this->http->on('request', function(Request $request, Response $response) {
       $this->onRequest($request, $response);
     });
-
-    /*$this->http->on('receive', function(Server $svr, int $fd, int $rid, string $data) {
-      echo "onReceive, length: ", strlen($data), "\n";
-    });*/
-
   }
 
   function pageNotFound(Request $request, Response $response) {
@@ -56,12 +46,6 @@ class Port {
   }
 
   function onRequest(Request $request, Response $response) {
-    if(($m = $request->server['request_method']) == 'POST')
-      var_dump($request);
-    elseif($m == 'PUT') {
-      var_dump($request);
-      echo 'raw: ', strlen($request->rawContent()), "\n";
-    }
     if(!$this->router->dispatch($request, $response))
       $this->pageNotFound($request, $response);
   }

@@ -6,7 +6,7 @@ use Psr\SimpleCache\CacheInterface;
 abstract class BaseCache implements CacheInterface {
   use CacheTrait;
 
-  function createCache(): BaseCache {
+  static function createCache(): BaseCache {
     return new static;
   }
 

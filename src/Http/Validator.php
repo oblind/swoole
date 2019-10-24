@@ -75,8 +75,7 @@ class Validator {
       if(!$r)
         $err = str_replace(':attribute', _($fields[$field] ?? static::$fields[$field] ?? $field), _(':attribute required'));
       return $r;
-    }
-    elseif(isset($values[$field]) && !static::$rule($values[$field], $a, $err, $values, $field)) {
+    } elseif(isset($values[$field]) && !static::$rule($values[$field], $a, $err, $values, $field)) {
       $err = str_replace(':attribute', _($fields[$field] ?? static::$fields[$field] ?? $field), $err);
       return false;
     }
@@ -111,9 +110,10 @@ Language::addTranslation([
   ':attribute required' => '请输入 :attribute'
 ], 'zh-cn');
 
-Validator::setFields([
+/*Validator::setFields([
   'name' => _('name'),
   'email' => _('email'),
   'password' => _('password'),
   'password_confirmation' => _('confirmation')
 ]);
+*/
