@@ -2,6 +2,7 @@
 namespace Oblind\Model;
 
 use PDOStatement;
+use Throwable;
 
 class Statement {
   /**@var BaseModel */
@@ -18,7 +19,7 @@ class Statement {
     $this->class = $class;
   }
 
-  static function goneAway(\Throwable $e) {
+  static function goneAway(Throwable $e) {
     return strpos($e->getMessage(), 'MySQL server has gone away');
   }
 
@@ -56,7 +57,7 @@ class Statement {
         $s->execute($this->params);
       } else
         $s = $db->query($sql);
-    } catch(\Throwable $e) {
+    } catch(Throwable $e) {
       if(static::goneAway($e) && !$gone) {
         $gone = true;
         goto _getdb;
@@ -123,7 +124,7 @@ class Statement {
         $s->execute($this->params);
       } else
         $s = $db->query($sql);
-    } catch(\Throwable $e) {
+    } catch(Throwable $e) {
       if(static::goneAway($e) && !$gone) {
         $gone = true;
         goto _getdb;

@@ -1,14 +1,17 @@
 <?php
 namespace Oblind\Model;
 
+use Throwable;
+use Oblind\Cache\BaseCache;
 use Oblind\Model\CacheStatement;
-use Oblind\Cache\CacheTrait;
 
 abstract class CacheModel extends BaseModel {
-  use CacheTrait;
-
   protected static $pure = true;
   protected static $loaded;
+
+  abstract static function getCache(): BaseCache;
+
+  abstract static function putCache(BaseCache $cache);
 
   static function where($condition, $params = null): Statement {
     return (new CacheStatement(get_called_class()))->where($condition, $params);
@@ -31,9 +34,14 @@ abstract class CacheModel extends BaseModel {
   }
 
   static function clear() {
-    $c = static::getCache();
-    $c->clear();
-    $c->delete('_loaded');
+    _getcache:
+    try {
+      $c = static::getCache();
+      $c->clear();
+      $c->delete('_loaded');
+    } catch(Throwable $e) {
+      goto _getcache;
+    }
     static::putCache($c);
   }
 
@@ -42,23 +50,33 @@ abstract class CacheModel extends BaseModel {
   }
 
   static function loaded() {
-    $c = static::getCache();
-    $r = static::$loaded || $c->get('_loaded');
+    _getcache:
+    try {
+      $c = static::getCache();
+      $r = static::$loaded || $c->get('_loaded');
+    } catch(Throwable $e) {
+      goto _getcache;
+    }
     static::putCache($c);
     return $r;
   }
 
   static function load() {
-    $c = static::getCache();
-    if(!static::$loaded) {
-      if(!$c->get('_loaded'))
-        $c->set('_loaded', 1);
-      static::$loaded = true;
+    _getcache:
+    try {
+      $c = static::getCache();
+      if(!static::$loaded) {
+        if(!$c->get('_loaded'))
+          $c->set('_loaded', 1);
+        static::$loaded = true;
+      }
+      static::setReturnRaw(true);
+      foreach(parent::get()->toArray() as $m)
+        $c->set(static::PREFIX . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
+      static::setReturnRaw(false);
+    } catch(Throwable $e) {
+      goto _getcache;
     }
-    static::setReturnRaw(true);
-    foreach(parent::get()->toArray() as $m)
-      $c->set(static::PREFIX . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
-    static::setReturnRaw(false);
     static::putCache($c);
   }
 
@@ -69,15 +87,26 @@ abstract class CacheModel extends BaseModel {
   function save() {
     parent::save();
     static::setReturnRaw(true);
-    $c = static::getCache();
-    $c->set(static::PREFIX . $this->{static::$primary}, json_encode($this->_data, JSON_UNESCAPED_UNICODE));
-    static::setReturnRaw(false);
+    _getcache:
+    try {
+      $c = static::getCache();
+      $c->set(static::PREFIX . $this->{static::$primary}, json_encode($this->_data, JSON_UNESCAPED_UNICODE));
+      static::setReturnRaw(false);
+    } catch(Throwable $e) {
+      goto _getcache;
+    }
     static::putCache($c);
   }
 
   function delete() {
     parent::delete();
-    ($c = static::getCache())->delete(static::PREFIX . $this->{static::$primary});
+    _getcache:
+    try {
+      $c = static::getCache();
+      $c->delete(static::PREFIX . $this->{static::$primary});
+    } catch(Throwable $e) {
+      goto _getcache;
+    }
     static::putCache($c);
   }
 }

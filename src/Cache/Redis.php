@@ -7,11 +7,6 @@ class Redis extends BaseCache {
   /**@var \Redis */
   public $redis;
 
-  //预置连接
-  static function initCachePool() {
-    static::putCache(static::getCache());
-  }
-
   function __construct(string $prefix = null) {
     $cfg = array_merge([
       'host' => 'localhost',
@@ -89,5 +84,3 @@ class Redis extends BaseCache {
     return $this->keys($key) ? true : false;
   }
 }
-
-Redis::initCachePool();

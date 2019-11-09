@@ -6,6 +6,8 @@ use Swoole\Server\Task;
 use Swoole\Http\Request;
 use Swoole\WebSocket\Frame;
 use Swoole\Websocket\Server as SwooleWebSocket;
+use Oblind\Cache\BaseCache;
+use Oblind\Model\BaseModel;
 
 const ERROR_STRING = [
   E_ERROR => 'E_ERROR',
@@ -46,11 +48,25 @@ abstract class WebSocket extends SwooleWebSocket {
   public $init = false;
 
   function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
+    $app = Application::app();
+    $config = $app::config();
+    $setting = [
+      'task_enable_coroutine' => true,
+      'task_worker_num' => 1,
+      'package_max_length' => 0x400000,  //4M
+      'pid_file' => $app::$pidFile,
+    ];
+    if($config['ssl']['enabled'] ?? 0) {
+      $sock_type |= SWOOLE_SSL;
+      $setting['ssl_cert_file'] = $config['ssl']['certFile'] ?? '/etc/ssl/certs/ssl-cert-snakeoil.pem';
+      $setting['ssl_key_file'] = $config['ssl']['keyFile'] ?? '/etc/ssl/private/ssl-cert-snakeoil.key';
+    }
     parent::__construct($host, $port, $mode, $sock_type);
+    $this->set($setting);
+
     $p = dirname($this->logFile);
     if(!is_dir($p)) //建立日志目录
       mkdir($p);
-    $this->set(['task_enable_coroutine' => true]);
     foreach(['Shutdown', 'Finish', 'Open', 'Close', 'Message'] as $e)
       $this->on($e, function(SwooleWebSocket $svr, ...$args) use($e) {
         $e = "on$e";
@@ -82,6 +98,12 @@ abstract class WebSocket extends SwooleWebSocket {
         }
       });
       \Swoole\Runtime::enableCoroutine();
+      //初始化缓存池
+      BaseCache::initCachePool();
+      BaseModel::initDatabasePool();
+      //预置连接
+      BaseCache::putCache($this->getCache());
+      BaseModel::putDatabase(BaseModel::getDatabase());
       if($this->taskworker) {
         cli_set_process_title(Application::app()::$prefix . "_task$wid");
         $this->logs = [];
@@ -162,9 +184,11 @@ abstract class WebSocket extends SwooleWebSocket {
 
   abstract function onMessage(Frame $f);
 
-  function push($fd, $data, $opcode = NULL, $finish = NULL) {
+  abstract function getCache(): BaseCache;
+
+  function push($fd, $data, $opcode = 1, $finish = true) {
     if($this->isEstablished($fd))
-      parent::push($fd, (is_array($data) || is_object($data) ? json_encode($data, JSON_UNESCAPED_UNICODE) : $data) . "\n", $opcode, $finish);
+      return parent::push($fd, is_array($data) || is_object($data) ? json_encode($data, JSON_UNESCAPED_UNICODE) : $data, $opcode, $finish);
   }
 
   static function toObj(&$a) {

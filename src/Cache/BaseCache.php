@@ -12,5 +12,3 @@ abstract class BaseCache implements CacheInterface {
 
   abstract function keys($pattern);
 }
-
-BaseCache::initCachePool();

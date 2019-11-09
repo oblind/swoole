@@ -4,6 +4,7 @@ namespace Oblind\Http;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Oblind\Application;
+use Swoole\Timer;
 
 class Controller {
   /**@var Router */
@@ -22,12 +23,15 @@ class Controller {
   function end($msg = null) {
     if(is_object($msg) || is_array($msg))
       $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
-    $l = strlen($msg);
-    if($l > 160 * 1024) { //过大, 以文件形式发送
+    $l = strlen($msg) / 1024;
+    if($l > 160) { //过大, 以文件形式发送
       $f = tmpfile();
       fwrite($f, $msg);
       $this->response->sendfile(stream_get_meta_data($f)['uri']);
-      fclose($f);
+      //网速200k/s
+      Timer::after(500 * (ceil($l / 100) + 1), function() use($f) {
+        fclose($f);
+      });
     } else
       $this->response->end($msg);
   }

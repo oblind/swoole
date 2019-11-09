@@ -47,7 +47,7 @@ class BaseModel extends Decachable implements JsonSerializable {
     }
   }
 
-  static function init() {
+  static function initDatabasePool() {
     static::$dbPool = new \SplQueue;
   }
 
@@ -342,4 +342,4 @@ class BaseModel extends Decachable implements JsonSerializable {
   }
 }
 
-BaseModel::init();
+BaseModel::initDatabasePool();

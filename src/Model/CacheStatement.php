@@ -86,68 +86,83 @@ class CacheStatement extends Statement {
   }
 
   function find($primary, $col = '*') {
-    $c = $this->class::getCache();
-    if(is_array($primary)) {
-      $r = [];
-      foreach($primary as $v) {
-        if($t = $this->match($this->prefix . $v, $col, $c))
-          $r[] = $t;
-      }
-      $r = new Collection($r);
-    } else
-      $r = $this->match($this->prefix . $primary, $col, $c);
+    _getcache:
+    try {
+      $c = $this->class::getCache();
+      if(is_array($primary)) {
+        $r = [];
+        foreach($primary as $v) {
+          if($t = $this->match($this->prefix . $v, $col, $c))
+            $r[] = $t;
+        }
+        $r = new Collection($r);
+      } else
+        $r = $this->match($this->prefix . $primary, $col, $c);
+    } catch(Throwable $e) {
+      goto _getcache;
+    }
     $this->class::putCache($c);
     return $r;
   }
 
   function first($col = '*'): ?BaseModel {
-    $c = $this->class::getCache();
-    $ks = $c->keys("$this->prefix*");
-    if($ks) {
-      foreach($ks as $k)
-        if($r = $this->match($k, $col, $c))
-          goto _end;
-      if(!$this->pure) {
-        if($r = parent::first($col))
-          $this->cache([$r], $c);
+    _getcache:
+    try {
+      $c = $this->class::getCache();
+      $ks = $c->keys("$this->prefix*");
+      if($ks) {
+        foreach($ks as $k)
+          if($r = $this->match($k, $col, $c))
+            goto _end;
+        if(!$this->pure) {
+          if($r = parent::first($col))
+            $this->cache([$r], $c);
+        } else
+          $r = null;
       } else
         $r = null;
-    } else
-      $r = null;
+    } catch(Throwable $e) {
+      goto _getcache;
+    }
     _end:
     $this->class::putCache($c);
     return $r;
   }
 
   function get($col = '*'): ?Collection {
-    $c = $this->class::getCache();
-    if($this->pure) {
-      $r = $this->match($c->keys($this->prefix . '*'), $col, $c);
-      if($r) {
-        $orderBy = $this->orderBy ?: [$this->class::getPrimary(), false];
-        $k = $orderBy[0];
-        if(is_string($r[0]->$k))
-          if($orderBy[1] == 'desc')
+    _getcache:
+    try {
+      $c = $this->class::getCache();
+      if($this->pure) {
+        $r = $this->match($c->keys($this->prefix . '*'), $col, $c);
+        if($r) {
+          $orderBy = $this->orderBy ?: [$this->class::getPrimary(), false];
+          $k = $orderBy[0];
+          if(is_string($r[0]->$k))
+            if($orderBy[1] == 'desc')
+              usort($r, function($a, $b) use($k) {
+                return strcmp($b->$k, $a->$k);
+              });
+            else
+              usort($r, function($a, $b) use($k) {
+                return strcmp($a->$k, $b->$k);
+              });
+          elseif($orderBy[1] == 'desc')
             usort($r, function($a, $b) use($k) {
-              return strcmp($b->$k, $a->$k);
+              return $b->$k <=> $a->$k;
             });
           else
             usort($r, function($a, $b) use($k) {
-              return strcmp($a->$k, $b->$k);
+              return $a->$k <=> $b->$k;
             });
-        elseif($orderBy[1] == 'desc')
-          usort($r, function($a, $b) use($k) {
-            return $b->$k <=> $a->$k;
-          });
-        else
-          usort($r, function($a, $b) use($k) {
-            return $a->$k <=> $b->$k;
-          });
+        }
+        $r = new Collection($r);
+      } else {
+        $r = parent::get($col);
+        $this->cache($r->toArray(), $c);
       }
-      $r = new Collection($r);
-    } else {
-      $r = parent::get($col);
-      $this->cache($r->toArray(), $c);
+    } catch(Throwable $e) {
+      goto _getcache;
     }
     $this->class::putCache($c);
     return $r;
