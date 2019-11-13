@@ -26,7 +26,7 @@ class Router {
     return new Restful($this);
   }
 
-  function addController(Controller $controller, string $module = null) {
+  function addController(Controller $controller, string $module = null): Router {
     $c = str_replace('\\', '/', strtolower(get_class($controller)));
     if(substr($c, -10) == 'controller')
       $c = substr($c, 0, strlen($c) - 10);
@@ -49,6 +49,7 @@ class Router {
         }
       }
     $this->controllers["/$c"] = $r;
+    return $this;
   }
 
   function addRewrite(string $method, string $rule, array $route, $middleware = null) {

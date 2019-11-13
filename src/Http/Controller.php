@@ -7,6 +7,8 @@ use Oblind\Application;
 use Swoole\Timer;
 
 class Controller {
+  /**@var array */
+  protected $listeners = [];
   /**@var Router */
   public $router;
   /**@var Request */
@@ -55,5 +57,18 @@ class Controller {
   function view(string $filename) {
     $p = Application::config()->viewPath ?? './view';
     $this->response->sendfile("$p/$filename");
+  }
+
+  function subscribe(string $event, callable $listener) {
+    if(!isset($this->listeners[$event]))
+      $this->listeners[$event] = [];
+    if(!in_array($listener, $this->listeners[$event]))
+      $this->listeners[$event][] = $listener;
+  }
+
+  function publish(string $event, $data) {
+    if($ls = $this->listeners[$event] ?? null)
+      foreach($ls as $l)
+        $l($data);
   }
 }

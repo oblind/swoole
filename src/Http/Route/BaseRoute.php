@@ -4,6 +4,7 @@ namespace Oblind\Http\Route;
 use Swoole\Http\Request;
 use Oblind\Http\Router;
 use Oblind\Http\Controller;
+use Oblind\Http\Middleware;
 
 abstract class BaseRoute {
   /**@var Router */
@@ -11,7 +12,7 @@ abstract class BaseRoute {
   /**@var string */
   public $name;
   /**@var array */
-  public $middlewares;
+  public $middlewares = [];
 
   function __construct(Router $router, Controller $controller = null, string $action = null, array $params = null) {
     $this->router = $router;
@@ -51,15 +52,12 @@ abstract class BaseRoute {
     return $r;
   }
 
-  function insertMiddleware(array $middlewares, int $index = -1) {
-    if(!$this->middlewares)
-      $this->middlewares = [];
+  function addMiddleware(Middleware $middleware, int $index = -1): BaseRoute {
     if($index == -1)
-      $this->middlewares = array_merge($this->middlewares, $middlewares);
-    else {
-      $t = array_splice($this->middlewares, 0, $index);
-      $this->middlewares = array_merge($t, $middlewares, $this->middlewares);
-    }
+      $this->middlewares[] = $middleware;
+    else
+      array_splice($this->middlewares, $index, 0, $middleware);
+    return $this;
   }
 
   abstract function route(Request $request): bool;

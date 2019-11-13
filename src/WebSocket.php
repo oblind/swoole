@@ -199,11 +199,12 @@ abstract class WebSocket extends SwooleWebSocket {
     return $a;
   }
 
-  function publish(?string $dest, string $cmd, $data) {
+  function publish(?string $dest, int $id, string $cmd, $data) {
     if(is_array($data))
       $data = static::toObj($data);
     $d = new \stdClass;
     $d->dest = $dest;
+    $d->id = $id;
     $d->cmd = $cmd;
     $d->data = $data;
     $m = json_encode($d);
@@ -252,6 +253,6 @@ abstract class WebSocket extends SwooleWebSocket {
 
   function restart() {
     $this->log('RESTARTING...');
-    $this->publish(null, 'restart', null);
+    $this->publish(null, 0, 'restart', null);
   }
 }
