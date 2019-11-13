@@ -50,7 +50,7 @@ class SocketPort {
       $this->svr->send($fd, $data);
   }
 
-  function publish(string $dest, string $cmd, $data) {
-    $this->svr->publish($dest, $cmd, $data);
+  function publish(string $dest, int $id, string $cmd, $data) {
+    $this->svr->publish($dest, $id, $cmd, $data);
   }
 }
