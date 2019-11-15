@@ -139,10 +139,10 @@ abstract class WebSocket extends SwooleWebSocket {
       $this->onTask($task);
     });
 
-    $this->on('pipeMessage', function(SwooleServer $svr, int $src_wid, $d) {
-      if($d = json_decode($d))
-        $this->onPublish($d);
-      $this->onPipeMessage($src_wid, $d);
+    $this->on('pipeMessage', function(SwooleServer $svr, int $src_wid, $s) {
+      if($d = json_decode($s))
+        $this->onPublish($d, $s);
+      $this->onPipeMessage($src_wid, $s);
     });
   }
 
@@ -211,10 +211,10 @@ abstract class WebSocket extends SwooleWebSocket {
     for($i = 0, $c = $this->setting['worker_num']; $i < $c; $i++)
       if($i != $this->worker_id)
         $this->sendMessage($m, $i);
-    $this->onPublish($d);
+    $this->onPublish($d, $m);
   }
 
-  function onPublish($d) {
+  function onPublish(\stdClass $d, string $raw) {
   }
 
   protected function addLog($l) {
