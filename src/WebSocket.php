@@ -54,6 +54,8 @@ abstract class WebSocket extends SwooleWebSocket {
       'task_enable_coroutine' => true,
       'task_worker_num' => 1,
       'package_max_length' => 0x400000,  //4M
+      'heartbeat_idle_time' => 600,
+      'heartbeat_check_interval' => 60,
       'pid_file' => $app::$pidFile,
     ];
     if($config['ssl']['enabled'] ?? 0) {

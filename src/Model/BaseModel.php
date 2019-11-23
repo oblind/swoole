@@ -1,12 +1,14 @@
 <?php
 namespace Oblind\Model;
 
+use ArrayIterator;
+use IteratorAggregate;
 use PDO;
 use PDOStatement;
 use JsonSerializable;
 use Oblind\Application;
 
-class BaseModel extends Decachable implements JsonSerializable {
+class BaseModel extends Decachable implements JsonSerializable, IteratorAggregate {
   /**@var \SplQueue */
   protected static $dbPool;
   /**@var array */
@@ -238,6 +240,7 @@ class BaseModel extends Decachable implements JsonSerializable {
     }
   }
 
+  //implement JsonSerializable
   function jsonSerialize() {
     if(static::$hidden && !static::$returnRawCount) {
       $r = (object)array_diff_key(get_object_vars($this->_data), array_flip(static::$hidden));
@@ -245,6 +248,11 @@ class BaseModel extends Decachable implements JsonSerializable {
       return $r;
     } else
       return $this->_data;
+  }
+
+  //implement IteratorAggregate
+  function getIterator() {
+    return new ArrayIterator($this->_data);
   }
 
   static function setTableName(string $class, string $tableName = null) {
