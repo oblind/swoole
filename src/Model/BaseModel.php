@@ -116,7 +116,7 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
     return json_encode($this->jsonSerialize(), JSON_UNESCAPED_UNICODE);
   }
 
-  static function where($condition, $params = null): Statement {
+  static function where($condition, ?array $params = null): Statement {
     return (new Statement(get_called_class()))->where($condition, $params);
   }
 

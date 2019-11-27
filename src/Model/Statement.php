@@ -68,7 +68,7 @@ class Statement {
     return $s;
   }
 
-  function where($condition, $params = null): Statement {
+  function where($condition, ?array $params = null): Statement {
     $this->condition = $condition;
     $this->params = $params;
     return $this;
