@@ -18,7 +18,7 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
   /**@var int */
   protected static $returnRawCount = 0;
   /**@var array */
-  protected static $hidden;
+  protected static $hiddenFields;
   /**@var array */
   protected static $jsonFields;
   /**@var array */
@@ -201,15 +201,15 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
       array_splice(static::$cacheFields, $i, 1);
   }
 
-  static function addHidden($hidden) {
+  static function addHiddenField($hidden) {
     if(is_array($hidden))
-      static::$hidden = array_merge(static::$hidden, $hidden);
+      static::$hiddenFields = array_merge(static::$hiddenFields, $hidden);
     else
-      static::$hidden[] = $hidden;
+      static::$hiddenFields[] = $hidden;
   }
 
   protected static function hideFields($d, string $class) {
-    foreach($class::$hidden as $f)
+    foreach($class::$hiddenFields as $f)
       if(property_exists($d, $f))
         unset($d->$f);
     if($class::$cacheFields)
@@ -242,8 +242,8 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
 
   //implement JsonSerializable
   function jsonSerialize() {
-    if(static::$hidden && !static::$returnRawCount) {
-      $r = (object)array_diff_key(get_object_vars($this->_data), array_flip(static::$hidden));
+    if(static::$hiddenFields && !static::$returnRawCount) {
+      $r = (object)array_diff_key(get_object_vars($this->_data), array_flip(static::$hiddenFields));
       static::hideFields($r, get_called_class());
       return $r;
     } else
