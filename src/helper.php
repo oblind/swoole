@@ -20,7 +20,3 @@ function base64url_decode(string $s): string {
     $s .= str_repeat('=', 4 - $l);
   return base64_decode(str_replace('_', '/', str_replace('-', '+', $s)));
 }
-
-function app() {
-  return Application::app();
-}

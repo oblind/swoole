@@ -6,33 +6,35 @@ use IteratorAggregate;
 use PDO;
 use PDOStatement;
 use JsonSerializable;
+use SplQueue;
+use stdClass;
 use Oblind\Application;
 
 class BaseModel extends Decachable implements JsonSerializable, IteratorAggregate {
   /**@var \SplQueue */
-  protected static $dbPool;
+  protected static SplQueue $dbPool;
   /**@var array */
-  protected static $tableNames = [];
+  protected static array $tableNames = [];
   /**@var string */
-  protected static $primary = 'id';
+  protected static string $primary = 'id';
   /**@var int */
-  protected static $returnRawCount = 0;
+  protected static int $returnRawCount = 0;
   /**@var array */
-  protected static $hiddenFields;
+  protected static ?array $hiddenFields = null;
   /**@var array */
-  protected static $jsonFields;
+  protected static ?array $jsonFields = null;
   /**@var array */
-  protected static $cacheFields;
+  protected static ?array $cacheFields = null;
   /**@var array */
-  protected static $cacheClasses;
+  protected static ?array $cacheClasses = null;
   /**@var array */
-  protected static $cacheItemClasses;
+  protected static ?array $cacheItemClasses = null;
   /**@var bool */
-  protected $_create;
+  protected bool $_create = false;
   /**@var \stdClass */
   protected $_data;
   /**@var array */
-  protected $_col = [];
+  protected array $_col = [];
 
   function __construct($data = null, $parent = null, $parentKey = null) {
     $this->_parent = $parent;

@@ -6,8 +6,9 @@ use Oblind\Cache\BaseCache;
 use Oblind\Model\CacheStatement;
 
 abstract class CacheModel extends BaseModel {
-  protected static $pure = true;
-  protected static $loaded;
+  const PREFIX = '';
+  protected static bool $pure = true;
+  protected static bool $loaded = false;
 
   abstract static function getCache(): BaseCache;
 

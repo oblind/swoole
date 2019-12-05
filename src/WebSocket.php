@@ -6,6 +6,7 @@ use Swoole\Server\Task;
 use Swoole\Http\Request;
 use Swoole\WebSocket\Frame;
 use Swoole\Websocket\Server as SwooleWebSocket;
+use Swoole\Table;
 use Oblind\Cache\BaseCache;
 use Oblind\Model\BaseModel;
 
@@ -30,22 +31,22 @@ abstract class WebSocket extends SwooleWebSocket {
   const MAX_TABLE_SIZE = 1024;
 
   /**@var string 日志路径 */
-  public $logFile = 'log/log.txt';
+  public string $logFile = 'log/log.txt';
   /**@var int 日志文件大小, 超出后会被压缩存档 */
-  public $logFileSize = 0x40000;
+  public int $logFileSize = 0x40000;
 
   /**@var \Swoole\Table */
-  public $tblProds;
+  public Table $tblProds;
   /**@var \Swoole\Table */
-  public $tblUsers;
+  public Table $tblUsers;
   /**@var array */
-  public $prods = [];
+  public array $prods = [];
   /**@var array */
-  public $users = [];
+  public array $users = [];
   /**@var array */
-  public $guests = [];
+  public array $guests = [];
   /**@var bool */
-  public $init = false;
+  public bool $init = false;
 
   function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
     $app = Application::app();

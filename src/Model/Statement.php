@@ -5,15 +5,15 @@ use PDOStatement;
 use Throwable;
 
 class Statement {
-  /**@var BaseModel */
-  protected $class;
+  /**@var string */
+  protected string $class;
   protected $condition;
   /**@var array */
-  protected $params;
+  protected ?array $params = null;
   /**@var array */
-  protected $orderBy;
+  protected ?array $orderBy = null;
   /**@var array */
-  protected $limit;
+  protected ?array $limit = null;
 
   function __construct(string $class) {
     $this->class = $class;
