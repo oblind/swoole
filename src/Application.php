@@ -8,15 +8,17 @@ class Application {
   const RESTART = 1;
   const STOP = 2;
   /**@var Application */
-  protected static $app;
+  protected static self $app;
   /**@var string */
-  public static $configFile = 'config.json';
+  public static string $configFile = 'config.json';
   /**@var string */
-  public static $pidFile = 'server.pid';
+  public static string $pidFile = 'server.pid';
   /**@var array */
-  protected static $config;
+  protected static array $config = [];
   /**@var string */
-  public static $prefix = 'app';
+  public static string $prefix = 'app';
+  /**@var string */
+  public static string $daemonizeFlag = '-d';
 
   static function app(): Application {
     return static::$app;
@@ -67,6 +69,8 @@ class Application {
         static::$app = $this;
       } else
         throw new \Exception('config file ' . static::$configFile . " not found\n");
+      static::$config['daemonize'] = in_array(static::$daemonizeFlag, $_SERVER['argv']);
+      echo 'daemonize: ', static::$config['daemonize'] ? 'yes' : 'no', "\n";
       $this->onStart();
     }
   }

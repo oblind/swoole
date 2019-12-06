@@ -8,6 +8,7 @@ use PDOStatement;
 use JsonSerializable;
 use SplQueue;
 use stdClass;
+use Swoole\Database\PDOPool;
 use Oblind\Application;
 
 class BaseModel extends Decachable implements JsonSerializable, IteratorAggregate {

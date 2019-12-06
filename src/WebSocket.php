@@ -58,12 +58,14 @@ abstract class WebSocket extends SwooleWebSocket {
       'heartbeat_idle_time' => 600,
       'heartbeat_check_interval' => 60,
       'pid_file' => $app::$pidFile,
+      'log_file' => $this->logFile,
     ];
     if($config['ssl']['enabled'] ?? 0) {
       $sock_type |= SWOOLE_SSL;
       $setting['ssl_cert_file'] = $config['ssl']['certFile'] ?? '/etc/ssl/certs/ssl-cert-snakeoil.pem';
       $setting['ssl_key_file'] = $config['ssl']['keyFile'] ?? '/etc/ssl/private/ssl-cert-snakeoil.key';
     }
+    $setting['daemonize'] = $config['daemonize'] ?? false;
     parent::__construct($host, $port, $mode, $sock_type);
     $this->set($setting);
 
