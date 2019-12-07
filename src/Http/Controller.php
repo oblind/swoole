@@ -8,13 +8,13 @@ use Swoole\Timer;
 
 class Controller {
   /**@var array */
-  protected $listeners = [];
+  protected array $listeners = [];
   /**@var Router */
-  public $router;
+  public Router $router;
   /**@var Request */
-  public $request;
+  public Request $request;
   /**@var Response */
-  public $response;
+  public Response $response;
 
   function write($msg) {
     if(is_object($msg) || is_array($msg))

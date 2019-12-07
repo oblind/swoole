@@ -7,18 +7,22 @@ use Oblind\Http\Route\BaseRoute;
 use Oblind\Http\Route\Restful;
 use Oblind\Http\Controller;
 use Oblind\Http\Pipeline;
+use Oblind\WebSocket;
 
 class Router {
+  /**@var Oblind\WebSocket */
+  public WebSocket $svr;
   /**@var array */
-  public $routes = [];
-  /**@var BaseRoute */
-  public $curRoute;
-  /**@var BaseRoute */
-  public $defaultRoute;
+  public array $routes = [];
+  /**@var Oblind\Http\Route\BaseRoute */
+  public BaseRoute $curRoute;
+  /**@var Oblind\Http\Route\BaseRoute */
+  public BaseRoute $defaultRoute;
   /**@var array */
-  public $controllers = [];
+  public array $controllers = [];
 
-  function __construct() {
+  function __construct(WebSocket $svr) {
+    $this->svr = $svr;
     $this->defaultRoute = $this->getDefaultRoute();
   }
 
@@ -62,14 +66,14 @@ class Router {
     $this->routes[] = new Route\Rewrite($this, $rule, $route);
   }
 
-  function middleware(Middleware $middleware, Closure $callback) {
+  function middleware(Middleware $middleware, callable $callback) {
     $ir = new InnerRouter;
     $callback($ir);
     foreach($ir->routes as $r)
       $this->act($r[0], $r[1], $r[2], $r[3], $r[4]);
   }
 
-  function prefix(string $prefix, Closure $callback) {
+  function prefix(string $prefix, callable $callback) {
     if(($l = strlen($prefix)) && $prefix[$l - 1] != '/')
       $prefix .= '/';
     $ir = new InnerRouter;

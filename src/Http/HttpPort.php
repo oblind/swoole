@@ -1,28 +1,23 @@
 <?php
 namespace Oblind\Http;
 
+use Swoole\Server\Port;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
-use Swoole\Server;
+use Oblind\WebSocket;
 
 class HttpPort {
-  /**@var \Swoole\Server */
-  public $svr;
-  /**@var string */
-  public $host;
-  /**@var int */
-  public $port;
-  /**@var \Swoole\Server\Port */
-  public $http;
+  /**@var Oblind\WebSocket */
+  public WebSocket $svr;
+  /**@var Swoole\Server\Port */
+  public Port $http;
   /**@var Router */
-  public $router;
+  public Router $router;
 
-  function __construct(Server $svr, string $host, int $port, int $type = SWOOLE_SOCK_TCP) {
+  function __construct(WebSocket $svr, string $host, int $port, int $type = SWOOLE_SOCK_TCP) {
     $this->svr = $svr;
-    $this->host = $host;
-    $this->port = $port;
     $this->http = $svr->addListener($host, $port, $type);
-    $this->router = new Router;
+    $this->router = new Router($svr);
     $this->http->on('request', function(Request $request, Response $response) {
       $this->onRequest($request, $response);
     });
