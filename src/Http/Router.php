@@ -15,7 +15,7 @@ class Router {
   /**@var array */
   public array $routes = [];
   /**@var Oblind\Http\Route\BaseRoute */
-  public BaseRoute $curRoute;
+  public ?BaseRoute $curRoute;
   /**@var Oblind\Http\Route\BaseRoute */
   public BaseRoute $defaultRoute;
   /**@var array */
