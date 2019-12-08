@@ -23,8 +23,11 @@ class Controller {
   }
 
   function end($msg = null) {
-    if(is_object($msg) || is_array($msg))
+    if(is_object($msg) || is_array($msg)) {
+      $this->response->header('Content-Type', 'application/json; charset=utf-8');
       $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
+    } else
+      $this->response->header('Content-Type', 'text/html; charset=utf-8');
     $l = strlen($msg) / 1024;
     if($l > 160) { //过大, 以文件形式发送
       $f = tmpfile();
