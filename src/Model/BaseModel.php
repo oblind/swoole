@@ -55,15 +55,22 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
     static::$dbPool = new \SplQueue;
   }
 
-  static function goneAway(\Throwable $e) {
-    return strpos($e->getMessage(), 'MySQL server has gone away');
+  static function error(\Throwable $e): bool {
+    $msg = $e->getMessage();
+    foreach([
+      'MySQL server has gone away',
+      ' bytes failed with errno='
+    ] as $m)
+      if(strpos($msg, $m))
+        return true;
+    return false;
   }
 
   static function getDatabase(): PDO {
     if(static::$dbPool->count())
       return static::$dbPool->pop();
     $cfg = Application::config()['db'];
-    $gone = false;
+    $err = false;
     _getdb:
     try {
       $db = new PDO(
@@ -79,8 +86,8 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
         ]
       );
     } catch(\Throwable $e) {
-      if(static::goneAway($e) && !$gone) {
-        $gone = true;
+      if(static::error($e) && !$err) {
+        $err = true;
         goto _getdb;
       } else
         throw $e;
@@ -158,14 +165,14 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
   }
 
   static function exec(string $sql): int {
-    $gone = false;
+    $err = false;
     _getdb:
     try {
       $db = static::getDatabase();
       $r = $db->exec($sql);
     } catch(\Throwable $e) {
-      if(static::goneAway($e) && !$gone) {
-        $gone = true;
+      if(static::error($e) && !$err) {
+        $err = true;
         goto _getdb;
       } else
         throw $e;
@@ -175,14 +182,14 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
   }
 
   static function query(string $sql): PDOStatement {
-    $gone = false;
+    $err = false;
     _getdb:
     try {
       $db = static::getDatabase();
       $r = $db->query($sql);
     } catch(\Throwable $e) {
-      if(static::goneAway($e) && !$gone) {
-        $gone = true;
+      if(static::error($e) && !$err) {
+        $err = true;
         goto _getdb;
       } else
         throw $e;
@@ -299,7 +306,7 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
     if($this->_col) {
       foreach($this->_col as $c)
         $v[] = static::$jsonFields && in_array($c, static::$jsonFields) ? json_encode($this->$c, JSON_UNESCAPED_UNICODE) : $this->$c;
-      $gone = false;
+      $err = false;
       _getdb:
       try {
         $db = static::getDatabase();
@@ -322,8 +329,8 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
           $r = $s->execute($v);
         }
       } catch(\Throwable $e) {
-        if(static::goneAway($e) && !$gone) {
-          $gone = true;
+        if(static::error($e) && !$err) {
+          $err = true;
           goto _getdb;
         } else
             throw $e;
@@ -335,14 +342,14 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
   }
 
   function delete() {
-    $gone = false;
+    $err = false;
     _getdb:
     try {
       $db = static::getDatabase();
       $r = $db->exec('delete from ' . static::getTableName() . ' where ' . static::$primary . '=' . $this->{static::$primary});
     } catch(\Throwable $e) {
-      if(static::goneAway($e) && !$gone) {
-        $gone = true;
+      if(static::error($e) && !$err) {
+        $err = true;
         goto _getdb;
       } else
         throw $e;

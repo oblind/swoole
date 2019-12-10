@@ -19,8 +19,15 @@ class Statement {
     $this->class = $class;
   }
 
-  static function goneAway(Throwable $e) {
-    return strpos($e->getMessage(), 'MySQL server has gone away');
+  static function error(\Throwable $e): bool {
+    $msg = $e->getMessage();
+    foreach([
+      'MySQL server has gone away',
+      ' bytes failed with errno='
+    ] as $m)
+      if(strpos($msg, $m))
+        return true;
+    return false;
   }
 
   protected function addCondition(string &$sql) {
@@ -37,7 +44,7 @@ class Statement {
   }
 
   protected function statement($col): ?PDOStatement {
-    $gone = false;
+    $err = false;
     _getdb:
     try {
       $db = $this->class::getDatabase();
@@ -58,8 +65,8 @@ class Statement {
       } else
         $s = $db->query($sql);
     } catch(Throwable $e) {
-      if(static::goneAway($e) && !$gone) {
-        $gone = true;
+      if(static::error($e) && !$err) {
+        $err = true;
         goto _getdb;
       } else
         throw $e;
@@ -113,7 +120,7 @@ class Statement {
   }
 
   function count(): int {
-    $gone = false;
+    $err = false;
     _getdb:
     try {
       $db = $this->class::getDatabase();
@@ -125,8 +132,8 @@ class Statement {
       } else
         $s = $db->query($sql);
     } catch(Throwable $e) {
-      if(static::goneAway($e) && !$gone) {
-        $gone = true;
+      if(static::error($e) && !$err) {
+        $err = true;
         goto _getdb;
       } else
         throw $e;
