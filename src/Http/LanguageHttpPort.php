@@ -7,7 +7,6 @@ use Oblind\Language;
 
 class LanguageHttpPort extends HttpPort {
   function pageNotFound(Request $request, Response $response) {
-    $response->status(RES_NOT_FOUND);
     $e = _('page not found');
     if($request->header['x-requested-with'] ?? 0 === 'XMLHttpRequest')
       $response->end($e);

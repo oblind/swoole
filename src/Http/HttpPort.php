@@ -24,7 +24,6 @@ class HttpPort {
   }
 
   function pageNotFound(Request $request, Response $response) {
-    $response->status(RES_NOT_FOUND);
     if($request->header['x-requested-with'] ?? 0 == 'XMLHttpRequest')
       $response->end('page not found');
     else
@@ -41,7 +40,10 @@ class HttpPort {
   }
 
   function onRequest(Request $request, Response $response) {
-    if(!$this->router->dispatch($request, $response))
+    if(!$this->router->dispatch($request, $response)) {
+      $response->status(RES_NOT_FOUND);
+      $response->header('content-type', 'text/html;charset=utf-8');
       $this->pageNotFound($request, $response);
+    }
   }
 }
