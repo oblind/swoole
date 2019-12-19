@@ -50,7 +50,7 @@ class Redis extends BaseCache {
   }
 
   function delete($key) {
-    $this->redis->delete($key);
+    $this->redis->del($key);
   }
 
   function clear() {

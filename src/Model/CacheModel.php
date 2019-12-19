@@ -41,6 +41,7 @@ abstract class CacheModel extends BaseModel {
       $c->clear();
       $c->delete('_loaded');
     } catch(Throwable $e) {
+      echo $e->getMessage(), "\n";
       goto _getcache;
     }
     static::putCache($c);
@@ -50,11 +51,11 @@ abstract class CacheModel extends BaseModel {
     return static::$pure;
   }
 
-  static function loaded() {
+  static function loaded(): bool {
     _getcache:
     try {
       $c = static::getCache();
-      $r = static::$loaded || $c->get('_loaded');
+      $r = static::$loaded || (bool)$c->get('_loaded');
     } catch(Throwable $e) {
       goto _getcache;
     }

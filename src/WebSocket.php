@@ -65,6 +65,7 @@ abstract class WebSocket extends SwooleWebSocket {
       $setting['ssl_cert_file'] = $config['ssl']['certFile'] ?? '/etc/ssl/certs/ssl-cert-snakeoil.pem';
       $setting['ssl_key_file'] = $config['ssl']['keyFile'] ?? '/etc/ssl/private/ssl-cert-snakeoil.key';
     }
+    $setting['open_http2_protocol'] = $config['http2'] ?? false;
     $setting['daemonize'] = $config['daemonize'] ?? false;
     parent::__construct($host, $port, $mode, $sock_type);
     $this->set($setting);
