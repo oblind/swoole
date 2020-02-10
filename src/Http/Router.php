@@ -48,7 +48,7 @@ class Router {
         if($ps = $m->getParameters()) {
           $a = [];
           foreach($ps as $p)
-            $a[$p->name] = (string)$p->getType();
+            $a[$p->name] = $p->getType()->getName();
           $r->args[substr($m->name, 0, strlen($m->name) - 6)] = $a;
         }
       }
