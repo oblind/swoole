@@ -57,6 +57,8 @@ abstract class WebSocket extends SwooleWebSocket {
       'package_max_length' => 0x400000,  //4M
       'heartbeat_idle_time' => 600,
       'heartbeat_check_interval' => 60,
+      'http_gzip_level' => 6,
+      //'websocket_compress' => true, //开启压缩
       'pid_file' => $app::$pidFile,
       'log_file' => $this->logFile,
     ];
@@ -244,11 +246,8 @@ abstract class WebSocket extends SwooleWebSocket {
         $p = dirname(realpath($this->logFile)) . '/' . Application::app()::$prefix;
         while(file_exists($f =  "$p$i.log.bz2"))
           $i++;
-        if($bz = bzopen($f, 'w')) {
-          bzwrite($bz, file_get_contents($this->logFile));
-          bzclose($bz);
+        if(copy($this->logFile, "compress.bzip2://$f"))
           unlink($this->logFile);
-        }
       }
       foreach($this->logs as $l)
         error_log($l, 3, $this->logFile);
