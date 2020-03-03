@@ -58,7 +58,7 @@ abstract class WebSocket extends SwooleWebSocket {
       'heartbeat_idle_time' => 600,
       'heartbeat_check_interval' => 60,
       'http_gzip_level' => 6,
-      //'websocket_compress' => true, //开启压缩
+      'websocket_compress' => true, //开启压缩
       'pid_file' => $app::$pidFile,
       'log_file' => $this->logFile,
     ];
@@ -194,9 +194,14 @@ abstract class WebSocket extends SwooleWebSocket {
 
   abstract function getCache(): BaseCache;
 
-  function push($fd, $data, $opcode = 1, $finish = true) {
-    if($this->isEstablished($fd))
-      return parent::push($fd, is_array($data) || is_object($data) ? json_encode($data, JSON_UNESCAPED_UNICODE) : $data, $opcode, $finish);
+  function push($fd, $data, $opcode = 1, $finish = 1) {
+    if($this->isEstablished($fd)) {
+      if(is_array($data) || is_object($data))
+        $data = json_encode($data, JSON_UNESCAPED_UNICODE);
+      if(is_string($data) && strlen($data) > 31)
+        $finish |= SWOOLE_WEBSOCKET_FLAG_COMPRESS;
+      return parent::push($fd, $data, $opcode, $finish);
+    }
   }
 
   static function toObj(&$a) {
