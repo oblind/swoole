@@ -26,7 +26,7 @@ abstract class CacheModel extends BaseModel {
     return (new CacheStatement(get_called_class()))->find($primary, $col);
   }
 
-  static function get(string $col = '*'): ?Collection {
+  static function get(string $col = '*'): Collection {
     return (new CacheStatement(get_called_class()))->get($col);
   }
 

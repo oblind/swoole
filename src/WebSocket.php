@@ -83,12 +83,12 @@ abstract class WebSocket extends SwooleWebSocket {
 
     $this->on('start', function(SwooleServer $svr) {
       cli_set_process_title(Application::app()::$prefix . '_master');
-      $this->onStart($svr);
+      $this->onStart();
     });
 
     $this->on('managerStart', function(SwooleServer $svr) {
       cli_set_process_title(Application::app()::$prefix . '_manager');
-      $this->onManagerStart($svr);
+      $this->onManagerStart();
     });
 
     $this->on('workerStart', function(SwooleServer $svr, int $wid) {
@@ -207,7 +207,7 @@ abstract class WebSocket extends SwooleWebSocket {
   static function toObj(&$a) {
     $a = (object)$a;
     foreach($a as $k => $v)
-      if(is_array($v))
+      if(is_array($v) && $v && !array_key_exists(0, $v))
         $a->$k = static::toObj($v);
     return $a;
   }

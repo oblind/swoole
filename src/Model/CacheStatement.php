@@ -61,6 +61,8 @@ class CacheStatement extends Statement {
           } else {
             if(is_string($v))
               $v = '\'' . addslashes($v) . '\'';
+            elseif($v === null)
+              $v = 'null';
             $op = $this->condition[$i++] ?? '==';
             if($op == '=')
               $op = '==';
@@ -98,7 +100,7 @@ class CacheStatement extends Statement {
         $r = new Collection($r);
       } else
         $r = $this->match($this->prefix . $primary, $col, $c);
-    } catch(Throwable $e) {
+    } catch(\Throwable $e) {
       goto _getcache;
     }
     $this->class::putCache($c);
@@ -121,7 +123,7 @@ class CacheStatement extends Statement {
           $r = null;
       } else
         $r = null;
-    } catch(Throwable $e) {
+    } catch(\Throwable $e) {
       goto _getcache;
     }
     _end:
@@ -129,7 +131,7 @@ class CacheStatement extends Statement {
     return $r;
   }
 
-  function get($col = '*'): ?Collection {
+  function get($col = '*'): Collection {
     _getcache:
     try {
       $c = $this->class::getCache();
@@ -161,7 +163,7 @@ class CacheStatement extends Statement {
         $r = parent::get($col);
         $this->cache($r->toArray(), $c);
       }
-    } catch(Throwable $e) {
+    } catch(\Throwable $e) {
       goto _getcache;
     }
     $this->class::putCache($c);

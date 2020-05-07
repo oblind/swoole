@@ -34,10 +34,22 @@ class Statement {
     if($this->condition) {
       $sql .= ' where ';
       if(is_array($this->condition)) {
-        $this->params = array_values($this->condition);
+        $this->params = [];
+        $cs = [];
+        foreach($this->condition as $k => $v) {
+          if($v === null)
+            $cs[] = "$k is null";
+          else {
+            $cs[] = "$k = ?";
+            $this->params[] = $v;
+          }
+        }
+        $sql .= implode(' and ', $cs);
+        /*$this->params = array_values($this->condition);
         $sql .= implode(' and ', array_map(function($k) {
           return "`$k`=?";
         }, array_keys($this->condition)));
+        */
       } else
         $sql .= $this->condition;
     }
@@ -103,14 +115,12 @@ class Statement {
     return $this->where([$p => $primary])->first($col);
   }
 
-  function get($col = '*'): ?Collection {
+  function get($col = '*'): Collection {
     $r = [];
-    if(($s = $this->statement($col)) && $s->rowCount()) {
+    if(($s = $this->statement($col)) && $s->rowCount())
       foreach($s as $v)
         $r[] = new $this->class($v);
-      return new Collection($r);
-    }
-    return null;
+    return new Collection($r);
   }
 
   function first($col = '*'): ?BaseModel {

@@ -43,7 +43,7 @@ class Controller {
 
   function error($msg, $code = RES_BAD_REQUEST) {
     $this->response->status($code);
-    $this->end($msg);
+    $this->end(['error' => $msg]);
   }
 
   function forward(string $path, string $action, array $params = null) {
