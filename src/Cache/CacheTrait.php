@@ -2,9 +2,7 @@
 namespace Oblind\Cache;
 
 trait CacheTrait {
-  /**@var \SplQueue */
-  //protected static $pool;
-  static $pool;
+  protected static \SplQueue $pool;
 
   abstract static function createCache(): BaseCache;
 

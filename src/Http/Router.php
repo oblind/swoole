@@ -10,15 +10,10 @@ use Oblind\Http\Pipeline;
 use Oblind\WebSocket;
 
 class Router {
-  /**@var Oblind\WebSocket */
   public WebSocket $svr;
-  /**@var array */
   public array $routes = [];
-  /**@var Oblind\Http\Route\BaseRoute */
   public ?BaseRoute $curRoute;
-  /**@var Oblind\Http\Route\BaseRoute */
   public BaseRoute $defaultRoute;
-  /**@var array */
   public array $controllers = [];
 
   function __construct(WebSocket $svr) {

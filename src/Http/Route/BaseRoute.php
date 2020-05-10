@@ -7,12 +7,9 @@ use Oblind\Http\Controller;
 use Oblind\Http\Middleware;
 
 abstract class BaseRoute {
-  /**@var Router */
-  public $router;
-  /**@var string */
-  public $name;
-  /**@var array */
-  public $middlewares = [];
+  public Router $router;
+  public string $name;
+  public array $middlewares = [];
 
   function __construct(Router $router, Controller $controller = null, string $action = null, array $params = null) {
     $this->router = $router;

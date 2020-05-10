@@ -2,7 +2,7 @@
 namespace Oblind\Http;
 
 class InnerRouter {
-  public $routes = [];
+  public array $routes = [];
 
   function middleware(array $middleware, callable $callback) {
     $ir = new static;

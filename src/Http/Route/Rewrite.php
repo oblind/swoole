@@ -5,8 +5,7 @@ use Swoole\Http\Request;
 use Oblind\Http\Router;
 
 class Rewrite extends BaseRoute {
-  /**@var string */
-  public $rule;
+  public string $rule;
 
   function __construct(Router $router, string $rule, array $route) {
     $this->router = $router;

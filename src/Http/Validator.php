@@ -4,8 +4,8 @@ namespace Oblind\Http;
 use Oblind\Language;
 
 class Validator {
-  protected static $validators = [];
-  protected static $fields = [];
+  protected static array $validators = [];
+  protected static array $fields = [];
 
   static function __callStatic($name, $a) {
     return isset(static::$validators[$name]) && static::$validators[$name](...$a);

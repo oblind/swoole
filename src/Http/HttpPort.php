@@ -7,11 +7,8 @@ use Swoole\Http\Response;
 use Oblind\WebSocket;
 
 class HttpPort {
-  /**@var Oblind\WebSocket */
   public WebSocket $svr;
-  /**@var Swoole\Server\Port */
   public Port $http;
-  /**@var Router */
   public Router $router;
 
   function __construct(WebSocket $svr, string $host, int $port, int $type = SWOOLE_SOCK_TCP) {

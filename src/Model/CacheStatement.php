@@ -4,8 +4,8 @@ namespace Oblind\Model;
 use Oblind\Cache\BaseCache;
 
 class CacheStatement extends Statement {
-  protected $prefix;
-  protected $pure;
+  protected string $prefix;
+  protected bool $pure;
 
   function __construct($class) {
     parent::__construct($class);

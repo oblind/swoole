@@ -3,14 +3,10 @@
 namespace Oblind;
 
 class SocketPort {
-  /**@var WebSocket */
-  public $svr;
-  /**@var string */
-  public $host;
-  /**@var int */
-  public $port;
-  /**@var \Swoole\Server\Port */
-  public $socket;
+  public WebSocket $svr;
+  public string $host;
+  public int $port;
+  public \Swoole\Server\Port $socket;
 
   function __construct(WebSocket $svr, string $host, int $port, $type = SWOOLE_SOCK_TCP) {
     $this->svr = $svr;
@@ -32,6 +28,10 @@ class SocketPort {
     });
 
     $this->socket = $socket;
+  }
+
+  function server(): WebSocket {
+    return $this->svr;
   }
 
   function onConnect(WebSocket $svr, int $fd) {

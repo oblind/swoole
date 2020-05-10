@@ -11,29 +11,17 @@ use stdClass;
 use Oblind\Application;
 
 class BaseModel extends Decachable implements JsonSerializable, IteratorAggregate {
-  /**@var \SplQueue */
   protected static SplQueue $dbPool;
-  /**@var array */
   protected static array $tableNames = [];
-  /**@var string */
   protected static string $primary = 'id';
-  /**@var int */
   protected static int $returnRawCount = 0;
-  /**@var array */
   protected static ?array $hiddenFields = null;
-  /**@var array */
   protected static ?array $jsonFields = null;
-  /**@var array */
   protected static ?array $cacheFields = null;
-  /**@var array */
   protected static ?array $cacheClasses = null;
-  /**@var array */
   protected static ?array $cacheItemClasses = null;
-  /**@var bool */
   protected bool $_create = false;
-  /**@var \stdClass */
   protected $_data;
-  /**@var array */
   protected array $_col = [];
 
   function __construct($data = null, $parent = null, $parentKey = null) {

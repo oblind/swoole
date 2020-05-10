@@ -4,8 +4,7 @@ namespace Oblind\Cache;
 use Oblind\Application;
 
 class Redis extends BaseCache {
-  /**@var \Redis */
-  public $redis;
+  public \Redis $redis;
 
   function __construct(string $prefix = null) {
     $cfg = array_merge([

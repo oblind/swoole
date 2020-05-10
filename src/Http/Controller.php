@@ -7,13 +7,8 @@ use Oblind\Application;
 use Swoole\Timer;
 
 class Controller {
-  /**@var array */
-  protected array $listeners = [];
-  /**@var Router */
   public Router $router;
-  /**@var Request */
   public Request $request;
-  /**@var Response */
   public Response $response;
 
   function write($msg) {
@@ -62,16 +57,8 @@ class Controller {
     $this->response->sendfile("$p/$filename");
   }
 
-  function subscribe(string $event, callable $listener) {
-    if(!isset($this->listeners[$event]))
-      $this->listeners[$event] = [];
-    if(!in_array($listener, $this->listeners[$event]))
-      $this->listeners[$event][] = $listener;
-  }
-
-  function publish(string $event, $data) {
-    if($ls = $this->listeners[$event] ?? null)
-      foreach($ls as $l)
-        $l($data);
+  //向用户/设备转发命令
+  function publish(string $dest, int $id, string $cmd, $data = null) {
+    $this->router->svr->publish($dest, $id, $cmd, $data);
   }
 }

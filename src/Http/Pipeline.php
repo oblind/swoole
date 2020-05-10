@@ -6,11 +6,9 @@ use Swoole\Http\Response;
 use Oblind\Http\Route\BaseRoute;
 
 class Pipeline {
-  protected $pipes = [];
-  /**@var Request */
-  protected $request;
-  /**@var Response */
-  protected $response;
+  protected array $pipes = [];
+  protected Request $request;
+  protected Response $response;
 
   function pipe($pipe): Pipeline {
     $this->pipes[] = $pipe;

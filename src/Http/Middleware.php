@@ -5,10 +5,8 @@ use Swoole\Http\Request;
 use Swoole\Http\Response;
 
 abstract class Middleware {
-  /**@var array */
-  public $exceptions;
-  /**@var bool */
-  public $blacklistMode;
+  public array $exceptions;
+  public bool $blacklistMode;
 
   /**
    * 中间件过滤器
