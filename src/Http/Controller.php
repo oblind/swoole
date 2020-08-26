@@ -53,7 +53,7 @@ class Controller {
   }
 
   function view(string $filename) {
-    $p = Application::config()->viewPath ?? './view';
+    $p = Application::config()['viewPath'] ?? './view';
     $this->response->sendfile("$p/$filename");
   }
 

@@ -123,6 +123,12 @@ class Statement {
     return new Collection($r);
   }
 
+  function entries($col = '*') {
+    $s = $this->statement($col);
+    foreach($s as $v)
+      yield $v;
+  }
+
   function first($col = '*'): ?BaseModel {
     if(($s = $this->statement($col)) && ($r = $s->fetch()))
       return new $this->class($r);

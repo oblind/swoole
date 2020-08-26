@@ -24,6 +24,15 @@ class Application {
     return static::$app;
   }
 
+  static function loadConfig(?string $configFile = null) {
+    if(!$configFile)
+      $configFile = static::$configFile;
+    if(file_exists($configFile))
+      static::$config = json_decode(file_get_contents($configFile), true);
+    else
+      throw new \Exception('config file ' . $configFile . " not found\n");
+  }
+
   static function config(): array {
     return static::$config;
   }
@@ -64,11 +73,8 @@ class Application {
     } elseif($pid)
       exit;
     if($cmd == static::START || $cmd == static::RESTART) {
-      if(file_exists(static::$configFile)) {
-        static::$config = json_decode(file_get_contents(static::$configFile), true);
-        static::$app = $this;
-      } else
-        throw new \Exception('config file ' . static::$configFile . " not found\n");
+      static::loadConfig();
+      static::$app = $this;
       static::$config['daemonize'] = in_array(static::$daemonizeFlag, $_SERVER['argv']);
       echo 'daemonize: ', static::$config['daemonize'] ? 'yes' : 'no', "\n";
       $this->onStart();
