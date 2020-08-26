@@ -144,7 +144,7 @@ abstract class WebSocket extends SwooleWebSocket {
             $this->writeLogs();
         }
       }
-      $this->onTask($task);
+      $this->onTask($d, $task);
     });
 
     $this->on('pipeMessage', function(SwooleServer $svr, int $src_wid, $s) {
@@ -175,7 +175,7 @@ abstract class WebSocket extends SwooleWebSocket {
   function onTastWorkerStop(int $tid) {
   }
 
-  function onTask(Task $task) {
+  function onTask(\stdClass $cmd, Task $task) {
   }
 
   function onFinish(int $tid, string $data) {
