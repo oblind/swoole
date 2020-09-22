@@ -33,6 +33,7 @@ class Router {
       $c = ($p = strrpos($c, '/')) === false ? $c : substr($c, $p + 1);
       $c = $module == '/' ? '' : "$module/$c";
     }
+    $controller->svr = $this->svr;
     $controller->router = $this;
     $r = (object)[
       'controller' => $controller,

@@ -33,7 +33,7 @@ abstract class WebSocket extends SwooleWebSocket {
   /**@var string 日志路径 */
   public string $logFile = 'log/log.txt';
   /**@var int 日志文件大小, 超出后会被压缩存档 */
-  public int $logFileSize = 0x40000;
+  public int $logFileSize = 0x20000;  //128k
 
   /**@var \Swoole\Table */
   public Table $tblProds;

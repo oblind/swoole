@@ -4,9 +4,11 @@ namespace Oblind\Http;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Oblind\Application;
+use Oblind\WebSocket;
 use Swoole\Timer;
 
 class Controller {
+  public WebSocket $svr;
   public Router $router;
   public Request $request;
   public Response $response;
