@@ -19,28 +19,32 @@ class Controller {
     $this->response->write($msg);
   }
 
-  function end($msg = null) {
+  function end($msg = null, Response $res = null) {
+    if(!$res)
+      $res = $this->response;
     if(is_object($msg) || is_array($msg)) {
-      $this->response->header('Content-Type', 'application/json; charset=utf-8');
+      $res->header('Content-Type', 'application/json; charset=utf-8');
       $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
     } else
-      $this->response->header('Content-Type', 'text/html; charset=utf-8');
+      $res->header('Content-Type', 'text/html; charset=utf-8');
     $l = strlen($msg) / 1024;
     if($l > 160) { //过大, 以文件形式发送
       $f = tmpfile();
       fwrite($f, $msg);
-      $this->response->sendfile(stream_get_meta_data($f)['uri']);
+      $res->sendfile(stream_get_meta_data($f)['uri']);
       //网速200k/s
       Timer::after(500 * (ceil($l / 100) + 1), function() use($f) {
         fclose($f);
       });
     } else
-      $this->response->end($msg);
+      $res->end($msg);
   }
 
-  function error($msg, $code = RES_BAD_REQUEST) {
-    $this->response->status($code);
-    $this->end(['error' => $msg]);
+  function error($msg, $code = RES_BAD_REQUEST, Response $res = null) {
+    if(!$res)
+      $res = $this->response;
+    $res->status($code);
+    $this->end(['error' => $msg], $res);
   }
 
   function forward(string $path, string $action, array $params = null) {
@@ -60,7 +64,7 @@ class Controller {
   }
 
   //向用户/设备转发命令
-  function publish(string $dest, int $id, string $cmd, $data = null) {
-    $this->router->svr->publish($dest, $id, $cmd, $data);
+  function publish(string $dest, int $id, string $cmd, $data = null, array $params = null) {
+    $this->router->svr->publish($dest, $id, $cmd, $data, $params);
   }
 }

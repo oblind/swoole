@@ -212,7 +212,7 @@ abstract class WebSocket extends SwooleWebSocket {
     return $a;
   }
 
-  function publish(?string $dest, int $id, string $cmd, $data = null) {
+  function publish(?string $dest, int $id, string $cmd, $data = null, array $params = null) {
     if(is_array($data))
       $data = static::toObj($data);
     $d = new \stdClass;
@@ -221,6 +221,8 @@ abstract class WebSocket extends SwooleWebSocket {
     $d->cmd = $cmd;
     if($data)
       $d->data = $data;
+    if($params)
+      $d->params = $params;
     $m = json_encode($d);
     for($i = 0, $c = $this->setting['worker_num']; $i < $c; $i++)
       if($i != $this->worker_id)
