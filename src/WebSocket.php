@@ -58,7 +58,7 @@ abstract class WebSocket extends SwooleWebSocket {
       'heartbeat_idle_time' => 600,
       'heartbeat_check_interval' => 60,
       'http_gzip_level' => 6,
-      'websocket_compress' => true, //开启压缩
+      'websocket_compression' => true, //开启压缩
       'pid_file' => $app::$pidFile,
       'log_file' => $this->logFile,
     ];
