@@ -1,7 +1,6 @@
 <?php
 namespace Oblind\Model;
 
-use Throwable;
 use Oblind\Cache\BaseCache;
 use Oblind\Model\CacheStatement;
 
@@ -40,7 +39,7 @@ abstract class CacheModel extends BaseModel {
       $c = static::getCache();
       $c->clear();
       $c->delete('_loaded');
-    } catch(Throwable $e) {
+    } catch(\Throwable $e) {
       echo $e->getMessage(), "\n";
       goto _getcache;
     }
@@ -56,7 +55,7 @@ abstract class CacheModel extends BaseModel {
     try {
       $c = static::getCache();
       $r = static::$loaded || (bool)$c->get('_loaded');
-    } catch(Throwable $e) {
+    } catch(\Throwable $e) {
       goto _getcache;
     }
     static::putCache($c);
@@ -76,7 +75,7 @@ abstract class CacheModel extends BaseModel {
       foreach(parent::get()->toArray() as $m)
         $c->set(static::PREFIX . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
       static::setReturnRaw(false);
-    } catch(Throwable $e) {
+    } catch(\Throwable $e) {
       goto _getcache;
     }
     static::putCache($c);
@@ -94,7 +93,7 @@ abstract class CacheModel extends BaseModel {
       $c = static::getCache();
       $c->set(static::PREFIX . $this->{static::$primary}, json_encode($this->_data, JSON_UNESCAPED_UNICODE));
       static::setReturnRaw(false);
-    } catch(Throwable $e) {
+    } catch(\Throwable $e) {
       goto _getcache;
     }
     static::putCache($c);
@@ -106,7 +105,7 @@ abstract class CacheModel extends BaseModel {
     try {
       $c = static::getCache();
       $c->delete(static::PREFIX . $this->{static::$primary});
-    } catch(Throwable $e) {
+    } catch(\Throwable $e) {
       goto _getcache;
     }
     static::putCache($c);

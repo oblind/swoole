@@ -1,9 +1,6 @@
 <?php
 namespace Oblind\Model;
 
-use PDOStatement;
-use Throwable;
-
 class Statement {
   /**@var string */
   protected string $class;
@@ -24,11 +21,14 @@ class Statement {
     foreach([
       'MySQL server has gone away',
       ' bytes failed with errno=',
+      'Wrong COM_STMT_PREPARE response size',
       ' has already been bound to another coroutine',
       'Packets out of order',
     ] as $m)
-      if(strpos($msg, $m))
+      if(strpos($msg, $m)) {
+        echo $e->getCode(), ": $msg\n";
         return true;
+      }
     return false;
   }
 
@@ -57,7 +57,7 @@ class Statement {
     }
   }
 
-  protected function statement($col): ?PDOStatement {
+  protected function statement($col): ?\PDOStatement {
     $err = false;
     _getdb:
     try {
@@ -78,7 +78,7 @@ class Statement {
         $s->execute($this->params);
       } else
         $s = $db->query($sql);
-    } catch(Throwable $e) {
+    } catch(\Throwable $e) {
       if(static::error($e) && !$err) {
         $err = true;
         goto _getdb;
@@ -149,7 +149,7 @@ class Statement {
         $s->execute($this->params);
       } else
         $s = $db->query($sql);
-    } catch(Throwable $e) {
+    } catch(\Throwable $e) {
       if(static::error($e) && !$err) {
         $err = true;
         goto _getdb;

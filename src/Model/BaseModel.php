@@ -1,17 +1,10 @@
 <?php
 namespace Oblind\Model;
 
-use ArrayIterator;
-use IteratorAggregate;
-use PDO;
-use PDOStatement;
-use JsonSerializable;
-use SplQueue;
-use stdClass;
 use Oblind\Application;
 
-class BaseModel extends Decachable implements JsonSerializable, IteratorAggregate {
-  protected static SplQueue $dbPool;
+class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggregate {
+  protected static \SplQueue $dbPool;
   protected static array $tableNames = [];
   protected static string $primary = 'id';
   protected static array $config;
@@ -52,35 +45,26 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
   }
 
   static function error(\Throwable $e): bool {
-    $msg = $e->getMessage();
-    foreach([
-      'MySQL server has gone away',
-      ' bytes failed with errno=',
-      ' has already been bound to another coroutine',
-      'Packets out of order',
-    ] as $m)
-      if(strpos($msg, $m))
-        return true;
-    return false;
+    return Statement::error($e);
   }
 
-  static function getDatabase(): PDO {
+  static function getDatabase(): \PDO {
     if(static::$dbPool->count())
       return static::$dbPool->pop();
     $cfg = static::$config;
     $err = false;
     _getdb:
     try {
-      $db = new PDO(
+      $db = new \PDO(
         "{$cfg['type']}:host={$cfg['host']};port={$cfg['port']};dbname={$cfg['database']}", $cfg['user'], $cfg['password'], [
           //持久连接
-          PDO::ATTR_PERSISTENT => true,
+          \PDO::ATTR_PERSISTENT => true,
           //返回对象, FETCH_ASSOC: 返回数组
-          PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+          \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_OBJ,
           //不对数字转化字符串
-          PDO::ATTR_EMULATE_PREPARES => false,
+          \PDO::ATTR_EMULATE_PREPARES => false,
           //抛出异常
-          PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+          \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
         ]
       );
       return $db;
@@ -93,7 +77,7 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
     }
   }
 
-  static function putDatabase(PDO $db) {
+  static function putDatabase(\PDO $db) {
     static::$dbPool->push($db);
   }
 
@@ -179,7 +163,7 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
     return $r;
   }
 
-  static function query(string $sql): PDOStatement {
+  static function query(string $sql): \PDOStatement {
     $err = false;
     _getdb:
     try {
@@ -259,7 +243,7 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
 
   //implement IteratorAggregate
   function getIterator() {
-    return new ArrayIterator($this->_data);
+    return new \ArrayIterator($this->_data);
   }
 
   static function setTableName(string $class, string $tableName = null) {
