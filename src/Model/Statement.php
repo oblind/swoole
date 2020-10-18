@@ -25,6 +25,7 @@ class Statement {
       'MySQL server has gone away',
       ' bytes failed with errno=',
       ' has already been bound to another coroutine',
+      'Packets out of order',
     ] as $m)
       if(strpos($msg, $m))
         return true;
