@@ -40,7 +40,7 @@ class Controller {
       $res->end($msg);
   }
 
-  function error($msg, $code = RES_BAD_REQUEST, Response $res = null) {
+  function error($msg, int $code = RES_BAD_REQUEST, Response $res = null) {
     if(!$res)
       $res = $this->response;
     $res->status($code);
