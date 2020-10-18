@@ -27,14 +27,41 @@ class Application {
   static function loadConfig(?string $configFile = null) {
     if(!$configFile)
       $configFile = static::$configFile;
-    if(file_exists($configFile))
+    if(file_exists($configFile)) {
       static::$config = json_decode(file_get_contents($configFile), true);
-    else
+      $default = [
+        'db' => [
+          'type' => 'mysql',
+          'host' => '127.0.0.1',
+          'port' => 3306,
+          'timeout' => 7200,
+        ],
+        'cache' => 'redis',
+        'redis' => [
+          'host' => '127.0.0.1',
+          'index' => 1
+        ],
+        'ssl' => [
+          'enabled' => true,
+          'certFile' => '/etc/ssl/certs/ssl-cert-snakeoil.pem',
+          'keyFile' => '/etc/ssl/private/ssl-cert-snakeoil.key'
+        ],
+        'http2' => true
+      ];
+      foreach($default as $k => $v)
+        if(is_array($v))
+          static::$config[$k] = array_merge($v, static::$config[$k] ?? []);
+        elseif(!isset(static::$config[$k]))
+          static::$config[$k] = $v;
+    } else
       throw new \Exception('config file ' . $configFile . " not found\n");
   }
 
   static function config(): array {
     return static::$config;
+  }
+
+  function log($log) {
   }
 
   function onStart(){

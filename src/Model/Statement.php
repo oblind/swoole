@@ -23,7 +23,8 @@ class Statement {
     $msg = $e->getMessage();
     foreach([
       'MySQL server has gone away',
-      ' bytes failed with errno='
+      ' bytes failed with errno=',
+      ' has already been bound to another coroutine',
     ] as $m)
       if(strpos($msg, $m))
         return true;

@@ -14,6 +14,7 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
   protected static SplQueue $dbPool;
   protected static array $tableNames = [];
   protected static string $primary = 'id';
+  protected static array $config;
   protected static int $returnRawCount = 0;
   protected static ?array $hiddenFields = null;
   protected static ?array $jsonFields = null;
@@ -23,6 +24,7 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
   protected bool $_create = false;
   protected $_data;
   protected array $_col = [];
+
 
   function __construct($data = null, $parent = null, $parentKey = null) {
     $this->_parent = $parent;
@@ -41,13 +43,15 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
 
   static function initDatabasePool() {
     static::$dbPool = new \SplQueue;
+    static::$config = Application::config()['db'];
   }
 
   static function error(\Throwable $e): bool {
     $msg = $e->getMessage();
     foreach([
       'MySQL server has gone away',
-      ' bytes failed with errno='
+      ' bytes failed with errno=',
+      ' has already been bound to another coroutine',
     ] as $m)
       if(strpos($msg, $m))
         return true;
@@ -57,7 +61,7 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
   static function getDatabase(): PDO {
     if(static::$dbPool->count())
       return static::$dbPool->pop();
-    $cfg = Application::config()['db'];
+    $cfg = static::$config;
     $err = false;
     _getdb:
     try {
@@ -73,14 +77,14 @@ class BaseModel extends Decachable implements JsonSerializable, IteratorAggregat
           PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]
       );
+      return $db;
     } catch(\Throwable $e) {
-      if(static::error($e) && !$err) {
+      if(!$err) {
         $err = true;
         goto _getdb;
       } else
         throw $e;
     }
-    return $db;
   }
 
   static function putDatabase(PDO $db) {
