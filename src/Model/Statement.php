@@ -24,6 +24,7 @@ class Statement {
       'Wrong COM_STMT_PREPARE response size',
       ' has already been bound to another coroutine',
       'Packets out of order',
+      'SQLSTATE[HY000]',
     ] as $m)
       if(strpos($msg, $m) !== false) {
         echo $e->getCode(), ": $msg\n";
