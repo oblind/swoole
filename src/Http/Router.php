@@ -112,7 +112,12 @@ class Router {
     $c = $request->controller;
     $c->request = $request;
     $c->response = $response;
-    $c->{"{$c->request->action}Action"}(...($request->args ?? []));
+    try {
+      $c->{"{$c->request->action}Action"}(...($request->args ?? []));
+    } catch(\Throwable $e) {
+      $response->status(RES_BAD_REQUEST);
+      $response->end($e->getCode() . ': ' . $e->getMessage());
+    }
   }
 
   function dispatch(Request $request, Response $response): bool {
