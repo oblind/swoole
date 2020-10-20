@@ -52,7 +52,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
     if(static::$dbPool->count())
       return static::$dbPool->pop();
     $cfg = static::$config;
-    $err = false;
+    $c = 0;
     _getdb:
     try {
       $db = new \PDO(
@@ -69,10 +69,9 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
       );
       return $db;
     } catch(\Throwable $e) {
-      if(!$err) {
-        $err = true;
+      if($c++ < 3)
         goto _getdb;
-      } else
+      else
         throw $e;
     }
   }
@@ -147,16 +146,15 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   }
 
   static function exec(string $sql): int {
-    $err = false;
+    $c = 0;
     _getdb:
     try {
       $db = static::getDatabase();
       $r = $db->exec($sql);
     } catch(\Throwable $e) {
-      if(static::error($e) && !$err) {
-        $err = true;
+      if(static::error($e) && $c++ < 3)
         goto _getdb;
-      } else
+      else
         throw $e;
     }
     static::putDatabase($db);
@@ -164,16 +162,15 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   }
 
   static function query(string $sql): \PDOStatement {
-    $err = false;
+    $c = 0;
     _getdb:
     try {
       $db = static::getDatabase();
       $r = $db->query($sql);
     } catch(\Throwable $e) {
-      if(static::error($e) && !$err) {
-        $err = true;
+      if(static::error($e) && $c++ < 3)
         goto _getdb;
-      } else
+      else
         throw $e;
     }
     static::putDatabase($db);
@@ -288,7 +285,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
     if($this->_col) {
       foreach($this->_col as $c)
         $v[] = static::$jsonFields && in_array($c, static::$jsonFields) ? json_encode($this->$c, JSON_UNESCAPED_UNICODE) : $this->$c;
-      $err = false;
+      $c = 0;
       _getdb:
       try {
         $db = static::getDatabase();
@@ -311,10 +308,9 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
           $r = $s->execute($v);
         }
       } catch(\Throwable $e) {
-        if(static::error($e) && !$err) {
-          $err = true;
+        if(static::error($e) && $c++ < 3)
           goto _getdb;
-        } else
+        else
             throw $e;
       }
       $this->_col = [];
@@ -324,16 +320,15 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   }
 
   function delete() {
-    $err = false;
+    $c = 0;
     _getdb:
     try {
       $db = static::getDatabase();
       $r = $db->exec('delete from ' . static::getTableName() . ' where ' . static::$primary . '=' . $this->{static::$primary});
     } catch(\Throwable $e) {
-      if(static::error($e) && !$err) {
-        $err = true;
+      if(static::error($e) && $c++ < 3)
         goto _getdb;
-      } else
+      else
         throw $e;
     }
     static::putDatabase($db);

@@ -58,7 +58,7 @@ class Statement {
   }
 
   protected function statement($col): ?\PDOStatement {
-    $err = false;
+    $c = 0;
     _getdb:
     try {
       $db = $this->class::getDatabase();
@@ -79,10 +79,9 @@ class Statement {
       } else
         $s = $db->query($sql);
     } catch(\Throwable $e) {
-      if(static::error($e) && !$err) {
-        $err = true;
+      if(static::error($e) && $c++ < 3)
         goto _getdb;
-      } else
+      else
         throw $e;
     }
     $this->class::putDatabase($db);
@@ -138,7 +137,7 @@ class Statement {
   }
 
   function count(): int {
-    $err = false;
+    $c = 0;
     _getdb:
     try {
       $db = $this->class::getDatabase();
@@ -150,10 +149,9 @@ class Statement {
       } else
         $s = $db->query($sql);
     } catch(\Throwable $e) {
-      if(static::error($e) && !$err) {
-        $err = true;
+      if(static::error($e) && $c++ < 3)
         goto _getdb;
-      } else
+      else
         throw $e;
     }
     $this->class::putDatabase($db);
