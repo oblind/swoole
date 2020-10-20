@@ -25,7 +25,7 @@ class Statement {
       ' has already been bound to another coroutine',
       'Packets out of order',
     ] as $m)
-      if(strpos($msg, $m)) {
+      if(strpos($msg, $m) !== false) {
         echo $e->getCode(), ": $msg\n";
         return true;
       }
