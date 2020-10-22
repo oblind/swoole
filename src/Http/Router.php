@@ -116,7 +116,8 @@ class Router {
       $c->{"{$c->request->action}Action"}(...($request->args ?? []));
     } catch(\Throwable $e) {
       try {
-        $msg = $e->getMessage() . "\nStack trace:";
+        $s = $e->getMessage();
+        $msg = $s . "\nStack trace:";
         if($ec = \Oblind\ERROR_STRING[$e->getCode()] ?? null)
           $msg = "$ec: $msg";
         foreach(debug_backtrace() as $i => $l) {
@@ -128,7 +129,7 @@ class Router {
         echo "$msg\n";
         $c->svr->log($msg);
         $response->status(RES_BAD_REQUEST);
-        $response->end(str_replace("\n", "<br>\n", $msg));
+        $response->end($request->header['x-requested-with'] ?? 0 == 'XMLHttpRequest' ? $s : str_replace("\n", "<br>\n", $msg));
       } catch(\Throwable $e) { //response已关闭
       }
     }
