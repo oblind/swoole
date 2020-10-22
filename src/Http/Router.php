@@ -115,8 +115,22 @@ class Router {
     try {
       $c->{"{$c->request->action}Action"}(...($request->args ?? []));
     } catch(\Throwable $e) {
-      $response->status(RES_BAD_REQUEST);
-      $response->end($e->getCode() . ': ' . $e->getMessage());
+      try {
+        $msg = $e->getMessage() . "\nStack trace:";
+        if($ec = \Oblind\ERROR_STRING[$e->getCode()] ?? null)
+          $msg = "$ec: $msg";
+        foreach(debug_backtrace() as $i => $l) {
+          $msg .= "\n#$i " . (isset($l['file']) ? "{$l['file']}({$l['line']})" : '[internal function]') . ': ';
+          if(isset($l['class']))
+            $msg .= "{$l['class']}{$l['type']}";
+          $msg .= "{$l['function']}()";
+        }
+        echo "$msg\n";
+        $c->svr->log($msg);
+        $response->status(RES_BAD_REQUEST);
+        $response->end(str_replace("\n", "<br>\n", $msg));
+      } catch(\Throwable $e) { //response已关闭
+      }
     }
   }
 
