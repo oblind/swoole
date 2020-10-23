@@ -39,11 +39,6 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
     static::$config = Application::config()['db'];
   }
 
-  static function clearDatabasePool() {
-    while(count(static::$dbPool))
-      static::$dbPool->pop();
-  }
-
   static function error(\Throwable $e): bool {
     return Statement::error($e);
   }

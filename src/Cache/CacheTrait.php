@@ -20,3 +20,5 @@ trait CacheTrait {
     static::$pool->push($cache);
   }
 }
+
+CacheTrait::initCachePool();

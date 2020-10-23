@@ -113,7 +113,7 @@ abstract class WebSocket extends SwooleWebSocket {
         }
       });
       \Swoole\Runtime::enableCoroutine();
-      //初始化缓存池
+      //初始化独立缓存池
       BaseCache::initCachePool();
       BaseModel::initDatabasePool();
       //预置连接
