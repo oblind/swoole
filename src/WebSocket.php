@@ -20,10 +20,12 @@ const ERROR_STRING = [
   E_COMPILE_ERROR => 'E_COMPILE_ERROR',
   E_COMPILE_WARNING => 'E_COMPILE_WARNING',
   E_USER_ERROR => 'E_USER_ERROR',
+  E_USER_WARNING => 'E_USER_WARNING',
   E_USER_NOTICE => 'E_USER_NOTICE',
   E_STRICT => 'E_STRICT',
   E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
   E_DEPRECATED => 'E_DEPRECATED',
+  E_USER_DEPRECATED => 'E_USER_DEPRECATED',
 ];
 const E_FATAL = E_ERROR | E_USER_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
 
@@ -94,7 +96,10 @@ abstract class WebSocket extends SwooleWebSocket {
     $this->on('workerStart', function(SwooleServer $svr, int $wid) {
       //将普通错误转为异常
       set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline) {
-        throw new \Exception("$errstr in $errfile($errline)", $errno);
+        $e = new \Exception("$errstr in $errfile($errline)", $errno);
+        //不保留参数
+        $e->backtrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS);
+        throw $e;
       });
       //记录致命错误
       register_shutdown_function(function() {

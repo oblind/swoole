@@ -11,6 +11,8 @@ class HttpPort {
   public Port $http;
   public Router $router;
 
+  protected bool $busy = false;
+
   function __construct(WebSocket $svr, string $host, int $port, int $type = SWOOLE_SOCK_TCP) {
     $this->svr = $svr;
     $this->http = $svr->addListener($host, $port, $type);
@@ -37,10 +39,14 @@ class HttpPort {
   }
 
   function onRequest(Request $request, Response $response) {
+    while($this->busy)
+      usleep(1000);
+    $this->busy = true;
     if(!$this->router->dispatch($request, $response)) {
       $response->status(RES_NOT_FOUND);
       $response->header('content-type', 'text/html;charset=utf-8');
       $this->pageNotFound($request, $response);
     }
+    $this->busy = false;
   }
 }

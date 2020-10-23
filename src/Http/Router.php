@@ -120,7 +120,7 @@ class Router {
         $msg = $s . "\nStack trace:";
         if($ec = \Oblind\ERROR_STRING[$e->getCode()] ?? null)
           $msg = "$ec: $msg";
-        foreach(debug_backtrace() as $i => $l) {
+        foreach($e->backtrace ?? debug_backtrace() as $i => $l) {
           $msg .= "\n#$i " . (isset($l['file']) ? "{$l['file']}({$l['line']})" : '[internal function]') . ': ';
           if(isset($l['class']))
             $msg .= "{$l['class']}{$l['type']}";
