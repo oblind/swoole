@@ -6,28 +6,10 @@ use Swoole\Server\Task;
 use Swoole\Http\Request;
 use Swoole\WebSocket\Frame;
 use Swoole\Websocket\Server as SwooleWebSocket;
+use Swoole\Timer;
 use Swoole\Table;
 use Oblind\Cache\BaseCache;
 use Oblind\Model\BaseModel;
-
-const ERROR_STRING = [
-  E_ERROR => 'E_ERROR',
-  E_WARNING => 'E_WARNING',
-  E_PARSE => 'E_PARSE',
-  E_NOTICE => 'E_NOTICE',
-  E_CORE_ERROR => 'E_CORE_ERROR',
-  E_CORE_WARNING => 'E_CORE_WARNING',
-  E_COMPILE_ERROR => 'E_COMPILE_ERROR',
-  E_COMPILE_WARNING => 'E_COMPILE_WARNING',
-  E_USER_ERROR => 'E_USER_ERROR',
-  E_USER_WARNING => 'E_USER_WARNING',
-  E_USER_NOTICE => 'E_USER_NOTICE',
-  E_STRICT => 'E_STRICT',
-  E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
-  E_DEPRECATED => 'E_DEPRECATED',
-  E_USER_DEPRECATED => 'E_USER_DEPRECATED',
-];
-const E_FATAL = E_ERROR | E_USER_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
 
 abstract class WebSocket extends SwooleWebSocket {
   const MAX_TABLE_SIZE = 1024;
@@ -122,7 +104,7 @@ abstract class WebSocket extends SwooleWebSocket {
       if($this->taskworker) {
         cli_set_process_title(Application::app()::$prefix . "_task$wid");
         $this->logs = [];
-        $this->tick(2000, function() {
+        Timer::tick(2000, function() {
           if($this->logs)
             $this->writeLogs();
         });

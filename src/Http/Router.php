@@ -9,6 +9,8 @@ use Oblind\Http\Controller;
 use Oblind\Http\Pipeline;
 use Oblind\WebSocket;
 
+use function Oblind\format_backtrace;
+
 class Router {
   public WebSocket $svr;
   public array $routes = [];
@@ -116,16 +118,7 @@ class Router {
       $c->{"{$c->request->action}Action"}(...($request->args ?? []));
     } catch(\Throwable $e) {
       try {
-        $s = $e->getMessage();
-        $msg = $s . "\nStack trace:";
-        if($ec = \Oblind\ERROR_STRING[$e->getCode()] ?? null)
-          $msg = "$ec: $msg";
-        foreach($e->backtrace ?? debug_backtrace() as $i => $l) {
-          $msg .= "\n#$i " . (isset($l['file']) ? "{$l['file']}({$l['line']})" : '[internal function]') . ': ';
-          if(isset($l['class']))
-            $msg .= "{$l['class']}{$l['type']}";
-          $msg .= "{$l['function']}()";
-        }
+        $msg = format_backtrace($e);
         echo "$msg\n";
         $c->svr->log($msg);
         $response->status(RES_BAD_REQUEST);
