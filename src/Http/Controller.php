@@ -1,6 +1,7 @@
 <?php
 namespace Oblind\Http;
 
+use Oblind\Http;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Oblind\Application;
@@ -40,7 +41,7 @@ class Controller {
       $res->end($msg);
   }
 
-  function error($msg, int $code = RES_BAD_REQUEST, Response $res = null) {
+  function error($msg, int $code = Http\RES_BAD_REQUEST, Response $res = null) {
     if(!$res)
       $res = $this->response;
     $res->status($code);
