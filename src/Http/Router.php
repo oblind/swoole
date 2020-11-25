@@ -11,6 +11,10 @@ use Oblind\WebSocket;
 
 use function Oblind\format_backtrace;
 
+function isLocalIp(string $ip): bool {
+  return ($h = substr($ip, 0, 4)) == '192.' || $h == '127.' || substr($ip, 0, 3) == '10.';
+}
+
 class Router {
   public WebSocket $svr;
   public array $routes = [];
