@@ -74,7 +74,7 @@ abstract class CacheModel extends BaseModel {
       }
       static::setReturnRaw(true);
       foreach(parent::get()->toArray() as $m)
-        $c->set(static::PREFIX . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
+        $c->set(static::PREFIX . ':' . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
       static::setReturnRaw(false);
     } catch(\Throwable $e) {
       echo $e->getMessage(), "\n";
@@ -93,7 +93,7 @@ abstract class CacheModel extends BaseModel {
     _getcache:
     try {
       $c = static::getCache();
-      $c->set(static::PREFIX . $this->{static::$primary}, json_encode($this->_data, JSON_UNESCAPED_UNICODE));
+      $c->set(static::PREFIX . ':' . $this->{static::$primary}, json_encode($this->_data, JSON_UNESCAPED_UNICODE));
       static::setReturnRaw(false);
     } catch(\Throwable $e) {
       echo $e->getMessage(), "\n";
@@ -107,7 +107,7 @@ abstract class CacheModel extends BaseModel {
     _getcache:
     try {
       $c = static::getCache();
-      $c->delete(static::PREFIX . $this->{static::$primary});
+      $c->delete(static::PREFIX . ':' . $this->{static::$primary});
     } catch(\Throwable $e) {
       echo $e->getMessage(), "\n";
       goto _getcache;

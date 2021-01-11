@@ -14,8 +14,8 @@ class CacheStatement extends Statement {
   }
 
   protected function cache($a, BaseCache $cache) {
-    $l = strlen($this->prefix);
-    $ps = $cache->keys($this->prefix . '*');
+    $l = strlen($this->prefix) + 1;
+    $ps = $cache->keys($this->prefix . ':*');
     foreach($ps as $p)
       $p = substr($p, $l);
     $t = [];
@@ -31,7 +31,7 @@ class CacheStatement extends Statement {
         $t[] = $m;
     }
     foreach($t as $m)
-      $cache->set($this->prefix . $m->{$pr}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
+      $cache->set($this->prefix . ':' . $m->{$pr}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
   }
 
   protected function prune(\stdClass $m, $col) {
@@ -94,12 +94,12 @@ class CacheStatement extends Statement {
       if(is_array($primary)) {
         $r = [];
         foreach($primary as $v) {
-          if($t = $this->match($this->prefix . $v, $col, $c))
+          if($t = $this->match($this->prefix . ':' . $v, $col, $c))
             $r[] = $t;
         }
         $r = new Collection($r);
       } else
-        $r = $this->match($this->prefix . $primary, $col, $c);
+        $r = $this->match($this->prefix . ':' . $primary, $col, $c);
     } catch(\Throwable $e) {
       goto _getcache;
     }
@@ -111,7 +111,7 @@ class CacheStatement extends Statement {
     _getcache:
     try {
       $c = $this->class::getCache();
-      $ks = $c->keys("$this->prefix*");
+      $ks = $c->keys("$this->prefix:*");
       if($ks) {
         foreach($ks as $k)
           if($r = $this->match($k, $col, $c))
@@ -136,7 +136,7 @@ class CacheStatement extends Statement {
     try {
       $c = $this->class::getCache();
       if($this->pure) {
-        $r = $this->match($c->keys($this->prefix . '*'), $col, $c);
+        $r = $this->match($c->keys($this->prefix . ':*'), $col, $c);
         if($r) {
           $orderBy = $this->orderBy ?: [$this->class::getPrimary(), false];
           $k = $orderBy[0];

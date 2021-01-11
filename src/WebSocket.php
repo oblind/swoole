@@ -244,7 +244,7 @@ abstract class WebSocket extends SwooleWebSocket {
       if(file_exists($this->logFile) && filesize($this->logFile) >= $this->logFileSize) {
         $i = 0;
         $p = dirname(realpath($this->logFile)) . '/' . Application::app()::$prefix;
-        while(file_exists($f =  "$p$i.log.bz2"))
+        while(file_exists($f = "$p$i.log.bz2"))
           $i++;
         if(copy($this->logFile, "compress.bzip2://$f"))
           unlink($this->logFile);
