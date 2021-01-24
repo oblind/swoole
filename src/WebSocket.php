@@ -11,13 +11,32 @@ use Swoole\Table;
 use Oblind\Cache\BaseCache;
 use Oblind\Model\BaseModel;
 
+class PublishMessage {
+  public string $dest;
+  public int $id;
+  public string $cmd;
+  public $data;
+  public ?array $params;
+
+  function __construct(string $dest, int $id, string $cmd, $data = null, array $params = null) {
+    $this->dest = $dest;
+    $this->id = $id;
+    $this->cmd = $cmd;
+    if($data !== null)
+      $this->data = $data;
+    if($params !== null)
+      $this->params = $params;
+  }
+};
+
 abstract class WebSocket extends SwooleWebSocket {
   const MAX_TABLE_SIZE = 1024;
 
   /**@var string 日志路径 */
-  public string $logFile = 'log/log.txt';
+  public string $logFile = './log/log.txt';
   /**@var int 日志文件大小, 超出后会被压缩存档 */
   public int $logFileSize = 0x20000;  //128k
+  protected bool $savingLog = false;
 
   /**@var \Swoole\Table */
   public Table $tblProds;
@@ -136,10 +155,10 @@ abstract class WebSocket extends SwooleWebSocket {
       $this->onTask($d, $task);
     });
 
-    $this->on('pipeMessage', function(SwooleServer $svr, int $src_wid, $s) {
-      if($d = json_decode($s))
-        $this->onPublish($d, $s);
-      $this->onPipeMessage($src_wid, $s);
+    $this->on('pipeMessage', function(SwooleServer $svr, int $src_wid, $msg) {
+      if(($d = json_decode($msg)) && isset($d->dest))
+        $this->onPublish($d->dest, $d->id, $d->cmd, $d->data ?? null, $d->params ?? null);
+      $this->onPipeMessage($src_wid, $msg);
     });
   }
 
@@ -204,25 +223,18 @@ abstract class WebSocket extends SwooleWebSocket {
     return $a;
   }
 
-  function publish(?string $dest, int $id, string $cmd, $data = null, array $params = null) {
-    if(is_array($data))
-      $data = static::toObj($data);
-    $d = new \stdClass;
-    $d->dest = $dest;
-    $d->id = $id;
-    $d->cmd = $cmd;
-    if($data)
-      $d->data = $data;
-    if($params)
-      $d->params = $params;
-    $m = json_encode($d);
+  function publish(string $dest, int $id, string $cmd, $data = null, array $params = null) {
+    //if(is_array($data))
+    //  $data = static::toObj($data);
+    $d = new PublishMessage($dest, $id, $cmd, $data, $params);
+    $m = json_encode($d, JSON_UNESCAPED_UNICODE);
     for($i = 0, $c = $this->setting['worker_num']; $i < $c; $i++)
       if($i != $this->worker_id)
         $this->sendMessage($m, $i);
-    $this->onPublish($d, $m);
+    $this->onPublish($dest, $id, $cmd, $data, $params);
   }
 
-  function onPublish(\stdClass $d, string $raw) {
+  function onPublish(string $dest, int $id, string $cmd, $data = null, $params = null) {
   }
 
   protected function addLog($l) {
@@ -238,18 +250,20 @@ abstract class WebSocket extends SwooleWebSocket {
 
   function writeLogs(bool $force = false) {
     if($this->taskworker || $force) {
-      //清除文件缓存, 否则filesize 返回值不变
-      clearstatcache();
-      //日志文件超过限制后压缩存档
-      if(file_exists($this->logFile) && filesize($this->logFile) >= $this->logFileSize) {
-        $i = 0;
-        $p = dirname(realpath($this->logFile)) . '/' . Application::app()::$prefix;
-        while(file_exists($f = "$p$i.log.bz2"))
-          $i++;
-        if(copy($this->logFile, "compress.bzip2://$f")) {
-          unlink($this->logFile);
-          file_put_contents($this->logFile, '');
+      if($this->taskworker && !$this->savingLog) {
+        $this->savingLog = true;
+        //清除文件缓存, 否则filesize 返回值不变
+        clearstatcache();
+        //日志文件超过限制后压缩存档
+        if($this->taskworker && file_exists($this->logFile) && filesize($this->logFile) >= $this->logFileSize) {
+          $i = 0;
+          $p = dirname(realpath($this->logFile)) . '/' . Application::app()::$prefix;
+          while(file_exists($f = "$p$i.log.bz2"))
+            $i++;
+          if(copy($this->logFile, "compress.bzip2://$f"))
+            file_put_contents($this->logFile, '');
         }
+        $this->savingLog = false;
       }
       foreach($this->logs as $l)
         error_log($l, 3, $this->logFile);
@@ -260,6 +274,6 @@ abstract class WebSocket extends SwooleWebSocket {
 
   function restart() {
     $this->log('RESTARTING...');
-    $this->publish(null, 0, 'restart', null);
+    $this->publish('system', 0, 'restart', null);
   }
 }
