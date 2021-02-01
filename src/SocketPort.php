@@ -45,7 +45,7 @@ class SocketPort {
 
   function send(int $fd, $data) {
     if(is_array($data) || is_object($data))
-      $this->svr->send($fd, json_encode($data, JSON_UNESCAPED_UNICODE));
+      $this->svr->send($fd, json_encode($data, JSON_UNESCAPED_UNICODE) . "\n");
     else
       $this->svr->send($fd, $data);
   }
