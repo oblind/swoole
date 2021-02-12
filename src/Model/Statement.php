@@ -1,6 +1,8 @@
 <?php
 namespace Oblind\Model;
 
+use Swoole\Database\PDOStatementProxy;
+
 class Statement {
   /**@var string */
   protected string $class;
@@ -58,7 +60,7 @@ class Statement {
     }
   }
 
-  protected function statement($col): ?\PDOStatement {
+  protected function statement($col): ?PDOStatementProxy {
     $c = 0;
     _getdb:
     try {
@@ -119,8 +121,9 @@ class Statement {
 
   function get($col = '*'): Collection {
     $r = [];
-    if(($s = $this->statement($col)) && $s->rowCount())
-      foreach($s as $v)
+    $s = $this->statement($col);
+    if($s && $s->rowCount())
+      foreach($s->fetchAll() as $v)
         $r[] = new $this->class($v);
     return new Collection($r);
   }

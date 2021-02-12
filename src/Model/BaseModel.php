@@ -1,13 +1,16 @@
 <?php
 namespace Oblind\Model;
 
+use Swoole\Database\PDOConfig;
+use Swoole\Database\PDOPool;
+use Swoole\Database\PDOProxy;
 use Oblind\Application;
 
 class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggregate {
-  protected static \SplQueue $dbPool;
+  protected static PDOPool $dbPool;
   protected static array $tableNames = [];
   protected static string $primary = 'id';
-  protected static array $config;
+  protected static PDOConfig $config;
   protected static int $returnRawCount = 0;
   protected static ?array $hiddenFields = null;
   protected static ?array $jsonFields = null;
@@ -35,16 +38,31 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   }
 
   static function initDatabasePool() {
-    static::$dbPool = new \SplQueue;
-    static::$config = Application::config()['db'];
-  }
+    $cfg = Application::config()['db'];
+    static::$config = (new PDOConfig)->withHost($cfg['host'])
+      ->withPort($cfg['port'])->withDbname($cfg['database'])
+      ->withUsername($cfg['user'])->withPassword($cfg['password'])
+      ->withOptions([
+        //持久连接
+        \PDO::ATTR_PERSISTENT => true,
+        //返回对象, FETCH_ASSOC: 返回数组
+        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_OBJ,
+        //不对数字转化字符串
+        \PDO::ATTR_EMULATE_PREPARES => false,
+        //抛出异常
+        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+      ]);
+      static::$dbPool = new PDOPool(static::$config);
+    }
 
   static function error(\Throwable $e): bool {
     return Statement::error($e);
   }
 
-  static function getDatabase(): \PDO {
-    if(static::$dbPool->count())
+  static function getDatabase(): PDOProxy {
+    return static::$dbPool->get();
+
+    /*if(static::$dbPool->count())
       return static::$dbPool->pop();
     $cfg = static::$config;
     $c = 0;
@@ -68,11 +86,11 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
         goto _getdb;
       else
         throw $e;
-    }
+    }*/
   }
 
-  static function putDatabase(\PDO $db) {
-    static::$dbPool->push($db);
+  static function putDatabase(PDOProxy $db) {
+    static::$dbPool->put($db);
   }
 
   function &__get(string $k) {

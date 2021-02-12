@@ -71,8 +71,8 @@ class Collection extends Decachable implements ArrayAccess, Countable, IteratorA
     return $r;
   }
 
-  function splice($start, ...$args) {
+  /*function splice($start, ...$args) {
     if(array_splice($this->_data, $start, ...$args) && $this->_parent)
       $this->_parent->onChange($this->_parentKey);
-  }
+  }*/
 }
