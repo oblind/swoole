@@ -6,9 +6,11 @@ use Swoole\Http\Request;
 class Restful extends BaseRoute {
 
   function route(Request $request): bool {
-    $ms = ['GET' => 'index', 'POST' => 'store', 'PUT' => 'update', 'DELETE' => 'destroy', 'PATCH' => 'patch'];
-    $uri = $request->server['request_uri'];
-    $a = $ms[$request->server['request_method']];
+    $ms = ['GET' => 'index', 'POST' => 'store', 'PUT' => 'update', 'DELETE' => 'destroy', 'PATCH' => 'patch', 'HEAD' => 'head', 'TRACE' => 'trace', 'OPTIONS' => 'options'];
+    $uri = $request->server['request_uri'] ?? null;
+    $a = $ms[$request->server['request_method']] ?? null;
+    if(!$uri || !$a)
+      return false;
     foreach($this->router->controllers as $n => $r) {
       $l = strlen($n);
       $c = $r->controller;
