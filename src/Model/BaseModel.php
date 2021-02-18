@@ -60,8 +60,18 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   }
 
   static function getDatabase(): PDOProxy {
-    return static::$dbPool->get();
-
+    $c = 0;
+    _getdb:
+    try {
+      $r = static::$dbPool->get();
+      return $r;
+    } catch(\Throwable $e) {
+      if($c++ < 10) {
+        usleep(50000);
+        goto _getdb;
+      } else
+        throw $e;
+    }
     /*if(static::$dbPool->count())
       return static::$dbPool->pop();
     $cfg = static::$config;
@@ -318,7 +328,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
           $sql = 'update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where ' . static::$primary . '=' . $this->{static::$primary};
           $s = $db->prepare($sql);
           //$s = $db->prepare('update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where ' . static::$primary . '=' . $this->{static::$primary});
-          $r = $s->execute($v);
+          $s->execute($v);
         }
       } catch(\Throwable $e) {
         if(static::error($e) && $c++ < 3)
