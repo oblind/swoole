@@ -126,7 +126,7 @@ class Router {
         echo "$msg\n";
         $c->svr->log($msg);
         $response->status(RES_BAD_REQUEST);
-        $response->end($request->header['x-requested-with'] ?? 0 == 'XMLHttpRequest' ? $s : str_replace("\n", "<br>\n", $msg));
+        $response->end($request->header['x-requested-with'] ?? 0 == 'XMLHttpRequest' ? $msg : str_replace("\n", "<br>\n", $msg));
       } catch(\Throwable $e) { //response已关闭
       }
     }
