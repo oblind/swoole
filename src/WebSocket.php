@@ -109,8 +109,7 @@ abstract class WebSocket extends SwooleWebSocket {
         if($e) {
           $this->onCrash();
           $msg = ERROR_STRING[$e['type']] . ": {$e['message']} in {$e['file']}({$e['line']})";
-          $this->log($msg, true);
-          echo "$msg\n";
+          $this->show($msg, true);
         }
       });
       \Swoole\Runtime::enableCoroutine();
@@ -242,10 +241,17 @@ abstract class WebSocket extends SwooleWebSocket {
   }
 
   function log(string $l, bool $force = false) {
-    if($this->taskworker && $this->worker_id == $this->setting['worker_num'] || $force)
+    if($this->taskworker && $this->worker_id == $this->setting['worker_num'] || $force) {
       $this->addLog($l);
-    else
+      if($force)
+        $this->writeLogs(true);
+    } else
       $this->task(json_encode(['cmd' => 'log', 'log' => $l]), 0);
+  }
+
+  function show(string $l, bool $force = false) {
+    echo date('y-m-d H:i:s') . "| $l\n";
+    $this->log($l, $force);
   }
 
   function writeLogs(bool $force = false) {

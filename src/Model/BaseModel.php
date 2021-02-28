@@ -66,7 +66,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
       $r = static::$dbPool->get();
       return $r;
     } catch(\Throwable $e) {
-      if($c++ < 10) {
+      if($c++ < 100) {
         usleep(50000);
         goto _getdb;
       } else
