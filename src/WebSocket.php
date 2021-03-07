@@ -37,19 +37,18 @@ abstract class WebSocket extends SwooleWebSocket {
   /**@var int 日志文件大小, 超出后会被压缩存档 */
   public int $logFileSize = 0x20000;  //128k
   protected bool $savingLog = false;
-
-  /**@var \Swoole\Table */
+  //跨进程设备列表，以fd为key
   public Table $tblProds;
-  /**@var \Swoole\Table */
+  //跨进程用户列表，以fd为key
   public Table $tblUsers;
-  /**@var array */
+  //product fd => id
+  public Table $tblProdIds;
+  //user fd => id
+  public Table $tblUserIds;
+  //worker本地设备列表
   public array $prods = [];
-  /**@var array */
+  //worker本地用户列表
   public array $users = [];
-  /**@var array */
-  public array $guests = [];
-  /**@var bool */
-  public bool $init = false;
 
   function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
     $app = Application::app();
