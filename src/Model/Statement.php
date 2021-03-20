@@ -97,7 +97,7 @@ class Statement {
     return $this;
   }
 
-  function orderBy(string $by, bool $order = false): Statement {
+  function orderBy(string $by, ?string $order = null): Statement {
     $this->orderBy = [$by, $order ? strtolower($order) : $order];
     return $this;
   }

@@ -66,6 +66,6 @@ class Controller {
 
   //向用户/设备转发命令
   function publish(string $dest, int $id, string $cmd, $data = null, array $params = null) {
-    $this->router->svr->publish($dest, $id, $cmd, $data, $params);
+    $this->svr->publish($dest, $id, $cmd, $data, $params);
   }
 }
