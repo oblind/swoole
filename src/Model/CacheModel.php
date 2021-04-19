@@ -21,15 +21,15 @@ abstract class CacheModel extends BaseModel {
     return (new CacheStatement(get_called_class()))->orderBy($by, $order);
   }
 
-  static function find($primary, string $col = '*') {
+  static function find($primary, $col = '*') {
     return (new CacheStatement(get_called_class()))->find($primary, $col);
   }
 
-  static function get(string $col = '*'): Collection {
+  static function get($col = '*'): Collection {
     return (new CacheStatement(get_called_class()))->get($col);
   }
 
-  static function first(string $col = '*'): ?BaseModel {
+  static function first($col = '*'): ?BaseModel {
     return (new CacheStatement(get_called_class()))->first($col);
   }
 
