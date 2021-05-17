@@ -1,18 +1,41 @@
 <?php
 namespace Oblind\Http;
 
-use Oblind\Http;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
+use Swoole\Timer;
+use Oblind\Http;
 use Oblind\Application;
 use Oblind\WebSocket;
-use Swoole\Timer;
+use Oblind\Model\BaseModel;
 
 class Controller {
   public WebSocket $svr;
   public Router $router;
   public Request $request;
   public Response $response;
+
+  static protected function removeDir(string $path) {
+    if(is_dir($path)) {
+      if($fs = scandir($path))
+        foreach($fs as $f)
+          if($f != '.' && $f != '..') {
+            $p = "$path/$f";
+            if(is_dir($p))
+              static::removeDir($p);
+            else
+              unlink($p);
+          }
+      rmdir($path);
+    }
+  }
+
+  static function removeModel(BaseModel $m, string $path, bool $reset = true) {
+    $m->delete();
+    if($reset)
+      $m::resetAutoIncrement();
+    static::removeDir($path);
+  }
 
   function write($msg) {
     if(is_object($msg) || is_array($msg))
