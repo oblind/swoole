@@ -15,7 +15,7 @@ class Controller {
   public Request $request;
   public Response $response;
 
-  static protected function removeDir(string $path) {
+  static protected function removeDir(string $path): int {
     if(is_dir($path)) {
       if($fs = scandir($path))
         foreach($fs as $f)
@@ -27,7 +27,9 @@ class Controller {
               unlink($p);
           }
       rmdir($path);
+      return 0;
     }
+    return -1;
   }
 
   static function removeModel(BaseModel $m, string $path, bool $reset = true) {
