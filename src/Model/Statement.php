@@ -122,9 +122,19 @@ class Statement {
   function get($col = '*'): Collection {
     $r = [];
     $s = $this->statement($col);
-    if($s && $s->rowCount())
-      foreach($s->fetchAll() as $v)
-        $r[] = new $this->class($v);
+    if($s && $s->rowCount()) {
+      if($intFields = $this->class::$intFields) {
+        foreach($s->fetchAll() as $d) {
+          foreach($intFields as $k)
+            if(isset($d->$k))
+              $d->$k = intval($d->$k);
+          $r[] = new $this->class($d);
+        }
+      } else {
+        foreach($s->fetchAll() as $d)
+          $r[] = new $this->class($d);
+      }
+    }
     return new Collection($r);
   }
 

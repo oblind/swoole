@@ -1,6 +1,7 @@
 <?php
 namespace Oblind\Model;
 
+use ReflectionClass;
 use Swoole\Database\PDOConfig;
 use Swoole\Database\PDOPool;
 use Swoole\Database\PDOProxy;
@@ -17,10 +18,11 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   protected static ?array $cacheFields = null;
   protected static ?array $cacheClasses = null;
   protected static ?array $cacheItemClasses = null;
+  public static ?array $intFields = null;
+
   protected bool $_create = false;
   protected $_data;
   protected array $_col = [];
-
 
   function __construct($data = null, $parent = null, $parentKey = null) {
     $this->_parent = $parent;
@@ -48,7 +50,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
         //返回对象, FETCH_ASSOC: 返回数组
         \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_OBJ,
         //不对数字转化字符串
-        \PDO::ATTR_EMULATE_PREPARES => false,
+        //\PDO::ATTR_EMULATE_PREPARES => false,
         //抛出异常
         \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
       ]);
