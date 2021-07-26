@@ -169,6 +169,10 @@ class Statement {
         throw $e;
     }
     $this->class::putDatabase($db);
-    return $s->fetch()->c;
+    $rows = $s->fetch();
+    if(isset($rows->c))
+      return $rows->c;
+    else
+      goto _getdb;
   }
 }
