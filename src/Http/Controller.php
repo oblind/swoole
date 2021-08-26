@@ -70,7 +70,7 @@ class Controller {
     if(!$res)
       $res = $this->response;
     $res->status($code);
-    $this->end(['error' => $msg], $res);
+    $this->end(is_string($msg) ? ['error' => $msg] : $msg, $res);
   }
 
   function forward(string $path, string $action, array $params = null) {

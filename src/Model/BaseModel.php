@@ -319,9 +319,9 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
           foreach($this->_col as $c)
             $cs[] = "`$c`";
           $s = $db->prepare('insert into ' . static::getTableName() . ' (' . implode(', ', $cs) . ') values (' . implode(', ', array_fill(0, count($this->_col), '?')) . ')');
-          $s->execute($v);
-          if($primary = intval($db->lastInsertId()))
-            $this->{static::$primary} = $primary;
+          if(!$s->execute($v))
+            goto _getdb;
+          $this->{static::$primary} = intval($db->lastInsertId());
           $this->_create = false;
         } else {
           $k = [];
@@ -330,7 +330,8 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
           $sql = 'update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where ' . static::$primary . '=' . $this->{static::$primary};
           $s = $db->prepare($sql);
           //$s = $db->prepare('update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where ' . static::$primary . '=' . $this->{static::$primary});
-          $s->execute($v);
+          if(!$s->execute($v))
+            goto _getdb;
         }
       } catch(\Throwable $e) {
         if(static::error($e) && $c++ < 3)
