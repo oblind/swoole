@@ -88,11 +88,16 @@ abstract class CacheModel extends BaseModel {
   }
 
   function save() {
+    $create = $this->_create;
     parent::save();
     static::setReturnRaw(true);
     _getcache:
     try {
       $c = static::getCache();
+      if($create) {
+        $m = parent::find($this->{static::$primary});
+        $this->_data = $m->_data;
+      }
       $c->set(static::PREFIX . ':' . $this->{static::$primary}, json_encode($this->_data, JSON_UNESCAPED_UNICODE));
       static::setReturnRaw(false);
     } catch(\Throwable $e) {

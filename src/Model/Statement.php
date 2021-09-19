@@ -145,8 +145,14 @@ class Statement {
   }
 
   function first($col = '*'): ?BaseModel {
-    if(($s = $this->statement($col)) && ($r = $s->fetch()))
+    if(($s = $this->statement($col)) && ($r = $s->fetch())) {
+      if($intFields = $this->class::$intFields) {
+        foreach($intFields as $k)
+          if(isset($r->$k))
+            $r->$k = intval($r->$k);
+      }
       return new $this->class($r);
+    }
     return null;
   }
 

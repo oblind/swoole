@@ -11,6 +11,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   protected static PDOPool $dbPool;
   protected static array $tableNames = [];
   protected static string $primary = 'id';
+  protected static bool $autoIncrease = true;
   protected static PDOConfig $config;
   protected static int $returnRawCount = 0;
   protected static ?array $hiddenFields = null;
@@ -321,7 +322,8 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
           $s = $db->prepare('insert into ' . static::getTableName() . ' (' . implode(', ', $cs) . ') values (' . implode(', ', array_fill(0, count($this->_col), '?')) . ')');
           if(!$s->execute($v))
             goto _getdb;
-          $this->{static::$primary} = intval($db->lastInsertId());
+          if(static::$autoIncrease)
+            $this->{static::$primary} = intval($db->lastInsertId());
           $this->_create = false;
         } else {
           $k = [];
