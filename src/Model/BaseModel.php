@@ -20,6 +20,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   protected static ?array $cacheClasses = null;
   protected static ?array $cacheItemClasses = null;
   public static ?array $intFields = null;
+  public static ?array $floatFields = null;
 
   protected bool $_create = false;
   protected $_data;
