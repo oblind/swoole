@@ -11,6 +11,12 @@ use Oblind\WebSocket;
 
 use function Oblind\format_backtrace;
 
+const RES_BAD_REQUEST = 400;
+const RES_NO_PERMISSION = 401;
+const RES_FORBIDEN = 403;
+const RES_NOT_FOUND = 404;
+const RES_NOT_ALLOWED = 405;
+
 function isLocalIp(string $ip): bool {
   return ($h = substr($ip, 0, 4)) == '192.' || $h == '127.' || substr($ip, 0, 3) == '10.';
 }

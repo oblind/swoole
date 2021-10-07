@@ -4,12 +4,14 @@ namespace Oblind;
 use Swoole\Server as SwooleServer;
 use Swoole\Server\Task;
 use Swoole\Http\Request;
+use Swoole\Http\Response;
 use Swoole\WebSocket\Frame;
 use Swoole\Websocket\Server as SwooleWebSocket;
 use Swoole\Timer;
 use Swoole\Table;
 use Oblind\Cache\BaseCache;
 use Oblind\Model\BaseModel;
+use Oblind\Http\Router;
 
 class PublishMessage {
   public string $dest;
@@ -31,6 +33,10 @@ class PublishMessage {
 
 abstract class WebSocket extends SwooleWebSocket {
   const MAX_TABLE_SIZE = 1024;
+  //路由
+  public Router $router;
+  protected bool $busy = false;
+  protected ?array $header = null;
 
   /**@var string 日志路径 */
   public string $logFile = './log/log.txt';
@@ -78,7 +84,11 @@ abstract class WebSocket extends SwooleWebSocket {
     $p = dirname($this->logFile);
     if(!is_dir($p)) //建立日志目录
       mkdir($p);
-    foreach(['Shutdown', 'Finish', 'Open', 'Close', 'Message'] as $e)
+
+    $this->router = new Router($this);
+    $this->header = $config['server']['header'] ?? null;
+
+    foreach(['Shutdown', 'Finish', 'Open', 'Close', 'Disconnect', 'Message'] as $e)
       $this->on($e, function(SwooleWebSocket $svr, ...$args) use($e) {
         $e = "on$e";
         $this->$e(...$args);
@@ -141,6 +151,13 @@ abstract class WebSocket extends SwooleWebSocket {
         $this->onWorkerStop($wid);
     });
 
+    $this->on('request', function(Request $request, Response $response) {
+      if($this->header)
+        foreach($this->header as $k => $v)
+          $response->header($k, $v);
+      $this->onRequest($request, $response);
+    });
+
     $this->on('task', function(SwooleServer $svr, Task $task) {
       if($d = json_decode($task->data)) {
         switch($d->cmd ?? null) {
@@ -198,6 +215,39 @@ abstract class WebSocket extends SwooleWebSocket {
   }
 
   function onClose(int $fd, int $rid) {
+  }
+
+  function onDisconnect($fd) {
+  }
+
+  function pageNotFound(Request $request, Response $response) {
+    $e = _('page not found');
+    if(($request->header['x-requested-with'] ?? null) == 'XMLHttpRequest')
+      $response->end($e);
+    else
+      $response->end("<!DOCTYPE html>
+<html>
+<head>
+  <meta name=\"viewport\" content=\"width=device-width\">
+</head>
+<body style=\"text-align: center\">
+<img width=\"200\" src=\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDQ4IDQ4Ij4KPGRlZnM+Cgk8bGluZWFyR3JhZGllbnQgaWQ9ImxnIiB4MT0iMCIgeTE9IjEwMCUiIHgyPSIwIiB5Mj0iMCI+CgkJPHN0b3Agb2Zmc2V0PSIwIiBzdHlsZT0ic3RvcC1jb2xvcjojQkJERUZCIi8+CgkJPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojNWFmIi8+Cgk8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+CjxnIGZpbGw9IiM2MTYxNjEiPgoJPHJlY3QgeD0iMzQuNiIgeT0iMjguMSIgdHJhbnNmb3JtPSJtYXRyaXgoLjcwNyAtLjcwNyAuNzA3IC43MDcgLTE1LjE1NCAzNi41ODYpIiB3aWR0aD0iNCIgaGVpZ2h0PSIxNyIvPgoJPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMTYiLz4KPC9nPgo8cmVjdCB4PSIzNi4yIiB5PSIzMi4xIiB0cmFuc2Zvcm09Im1hdHJpeCguNzA3IC0uNzA3IC43MDcgLjcwNyAtMTUuODM5IDM4LjIzOSkiIGZpbGw9IiMzNzQ3NEYiIHdpZHRoPSI0IiBoZWlnaHQ9IjEyLjMiLz4KPGNpcmNsZSBmaWxsPSJ1cmwoI2xnKSIgY3g9IjIwIiBjeT0iMjAiIHI9IjEzIi8+CjxwYXRoIGZpbGw9IiNCQkRFRkIiIGQ9Ik0yNi45LDE0LjJjLTEuNy0yLTQuMi0zLjItNi45LTMuMnMtNS4yLDEuMi02LjksMy4yYy0wLjQsMC40LTAuMywxLjEsMC4xLDEuNGMwLjQsMC40LDEuMSwwLjMsMS40LTAuMSBDMTYsMTMuOSwxNy45LDEzLDIwLDEzczQsMC45LDUuNCwyLjVjMC4yLDAuMiwwLjUsMC40LDAuOCwwLjRjMC4yLDAsMC41LTAuMSwwLjYtMC4yQzI3LjIsMTUuMywyNy4yLDE0LjYsMjYuOSwxNC4yeiIvPgo8L3N2Zz4K\"><br>
+{$request->server['request_uri']}
+<h2>$e</h2>
+</body>
+</html>");
+  }
+
+  function onRequest(Request $request, Response $response) {
+    while($this->busy)
+      usleep(1000);
+    $this->busy = true;
+    if(!$this->router->dispatch($request, $response)) {
+      $response->status(\Oblind\Http\RES_NOT_FOUND);
+      $response->header('content-type', 'text/html;charset=utf-8');
+      $this->pageNotFound($request, $response);
+    }
+    $this->busy = false;
   }
 
   abstract function onMessage(Frame $f);
