@@ -254,13 +254,13 @@ abstract class WebSocket extends SwooleWebSocket {
 
   abstract function getCache(): BaseCache;
 
-  function push($fd, $data, $opcode = 1, $finish = 1) {
+  function push($fd, $data, $opcode = \WEBSOCKET_OPCODE_TEXT, $flags = \SWOOLE_WEBSOCKET_FLAG_FIN): bool {
     if($this->isEstablished($fd)) {
       if(is_array($data) || is_object($data))
         $data = json_encode($data, JSON_UNESCAPED_UNICODE);
       if(is_string($data) && strlen($data) > 31)
-        $finish |= SWOOLE_WEBSOCKET_FLAG_COMPRESS;
-      return parent::push($fd, $data, $opcode, $finish);
+        $flags |= SWOOLE_WEBSOCKET_FLAG_COMPRESS;
+      return parent::push($fd, $data, $opcode, $flags);
     }
   }
 
