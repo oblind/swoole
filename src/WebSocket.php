@@ -262,6 +262,7 @@ abstract class WebSocket extends SwooleWebSocket {
         $flags |= SWOOLE_WEBSOCKET_FLAG_COMPRESS;
       return parent::push($fd, $data, $opcode, $flags);
     }
+    return true;
   }
 
   static function toObj(&$a) {
