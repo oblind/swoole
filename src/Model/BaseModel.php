@@ -266,7 +266,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   }
 
   //implement IteratorAggregate
-  function getIterator() {
+  function getIterator(): \Traversable {
     return new \ArrayIterator($this->_data);
   }
 
