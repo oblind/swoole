@@ -324,7 +324,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
           if(!$s->execute($v))
             goto _getdb;
           if(static::$autoIncrease)
-            $this->{static::$primary} = intval($db->lastInsertId());
+            $this->{static::$primary} = intval($db->lastInsertId(static::$primary));
           $this->_create = false;
         } else {
           $k = [];
