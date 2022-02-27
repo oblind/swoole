@@ -311,7 +311,8 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   function save() {
     if($this->_col) {
       foreach($this->_col as $c)
-        $v[] = static::$jsonFields && in_array($c, static::$jsonFields) ? json_encode($this->$c, JSON_UNESCAPED_UNICODE) : $this->$c;
+        $v[] = static::$jsonFields && in_array($c, static::$jsonFields) && $this->$c !== null
+          ? json_encode($this->$c, JSON_UNESCAPED_UNICODE) : $this->$c;
       $c = 0;
       _getdb:
       try {
