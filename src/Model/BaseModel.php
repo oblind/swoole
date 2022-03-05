@@ -44,23 +44,23 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   static function initDatabasePool() {
     $cfg = Application::config()['db'];
     static::$config = (new PDOConfig)->withHost($cfg['host'])
-      ->withPort($cfg['port'])->withDbname($cfg['database'])
-      ->withUsername($cfg['user'])->withPassword($cfg['password'])
-      ->withOptions([
-        //持久连接
-        \PDO::ATTR_PERSISTENT => true,
-        //返回对象, FETCH_ASSOC: 返回数组
-        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_OBJ,
-        //不对数字转化字符串
-        //\PDO::ATTR_EMULATE_PREPARES => false,
-        //抛出异常
-        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-      ]);
-      static::$dbPool = new PDOPool(static::$config);
-    }
+    ->withPort($cfg['port'])->withDbname($cfg['database'])
+    ->withUsername($cfg['user'])->withPassword($cfg['password'])
+    ->withOptions([
+      //持久连接
+      \PDO::ATTR_PERSISTENT => true,
+      //返回对象, FETCH_ASSOC: 返回数组
+      \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_OBJ,
+      //不对数字转化字符串
+      //\PDO::ATTR_EMULATE_PREPARES => false,
+      //抛出异常
+      \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+    ]);
+    static::$dbPool = new PDOPool(static::$config);
+  }
 
-  static function error(\Throwable $e): bool {
-    return Statement::error($e);
+  static function delay(int $c): bool {
+    return Statement::delay($c);
   }
 
   static function getDatabase(): PDOProxy {
@@ -179,7 +179,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
       $db = static::getDatabase();
       $r = $db->exec($sql);
     } catch(\Throwable $e) {
-      if(static::error($e) && $c++ < 3)
+      if(static::delay($c++))
         goto _getdb;
       else
         throw $e;
@@ -195,7 +195,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
       $db = static::getDatabase();
       $r = $db->query($sql);
     } catch(\Throwable $e) {
-      if(static::error($e) && $c++ < 3)
+      if(static::delay($c++))
         goto _getdb;
       else
         throw $e;
@@ -338,10 +338,10 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
             goto _getdb;
         }
       } catch(\Throwable $e) {
-        if(static::error($e) && $c++ < 3)
+        if(static::delay($c++))
           goto _getdb;
         else
-            throw $e;
+          throw $e;
       }
       $this->_col = [];
       static::putDatabase($db);
@@ -356,7 +356,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
       $db = static::getDatabase();
       $r = $db->exec('delete from ' . static::getTableName() . ' where ' . static::$primary . '=' . $this->{static::$primary});
     } catch(\Throwable $e) {
-      if(static::error($e) && $c++ < 3)
+      if(static::delay($c++))
         goto _getdb;
       else
         throw $e;

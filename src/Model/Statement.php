@@ -18,7 +18,7 @@ class Statement {
     $this->class = $class;
   }
 
-  static function error(\Throwable $e): bool {
+  /*static function error(\Throwable $e): bool {
     $msg = $e->getMessage();
     foreach([
       'MySQL server has gone away',
@@ -27,12 +27,21 @@ class Statement {
       ' has already been bound to another coroutine',
       'Packets out of order',
       'SQLSTATE[HY000]',
+      'Connection was killed',
     ] as $m)
       if(strpos($msg, $m) !== false) {
         echo $e->getCode(), ": $msg\n";
         return true;
       }
     return false;
+  }*/
+
+  static function delay(int $c): bool {
+    if($c > 1)
+      usleep(100000);
+    elseif($c)
+      usleep(50000);
+    return $c++ < 3;
   }
 
   protected function addCondition(string &$sql) {
@@ -82,7 +91,7 @@ class Statement {
       } else
         $s = $db->query($sql);
     } catch(\Throwable $e) {
-      if(static::error($e) && $c++ < 3)
+      if(static::delay($c++))
         goto _getdb;
       else
         throw $e;
@@ -171,7 +180,7 @@ class Statement {
       } else
         $s = $db->query($sql);
     } catch(\Throwable $e) {
-      if(static::error($e) && $c++ < 3)
+      if(static::delay($c++))
         goto _getdb;
       else
         throw $e;
@@ -180,7 +189,9 @@ class Statement {
     $rows = $s->fetch();
     if(isset($rows->c))
       return $rows->c;
-    else
+    else {
+      $c = 0;
       goto _getdb;
+    }
   }
 }
