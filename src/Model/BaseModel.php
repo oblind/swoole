@@ -310,17 +310,17 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
 
   function save() {
     if($this->_col) {
-      foreach($this->_col as $c)
-        $v[] = static::$jsonFields && in_array($c, static::$jsonFields) && $this->$c !== null
-          ? json_encode($this->$c, JSON_UNESCAPED_UNICODE) : $this->$c;
+      foreach($this->_col as $col)
+        $v[] = static::$jsonFields && in_array($col, static::$jsonFields) && $this->$col !== null
+          ? json_encode($this->$col, JSON_UNESCAPED_UNICODE) : $this->$col;
       $c = 0;
       _getdb:
       try {
         $db = static::getDatabase();
         $cs = [];
         if($this->_create) {
-          foreach($this->_col as $c)
-            $cs[] = "`$c`";
+          foreach($this->_col as $col)
+            $cs[] = "`$col`";
           $s = $db->prepare('insert into ' . static::getTableName() . ' (' . implode(', ', $cs) . ') values (' . implode(', ', array_fill(0, count($this->_col), '?')) . ')');
           if(!$s->execute($v))
             goto _getdb;
@@ -329,8 +329,8 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
           $this->_create = false;
         } else {
           $k = [];
-          foreach($this->_col as $c)
-            $k[] = "`$c`=?";
+          foreach($this->_col as $col)
+            $k[] = "`$col`=?";
           $sql = 'update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where ' . static::$primary . '=' . $this->{static::$primary};
           $s = $db->prepare($sql);
           //$s = $db->prepare('update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where ' . static::$primary . '=' . $this->{static::$primary});
