@@ -26,6 +26,7 @@ class Restful extends BaseRoute {
           continue;
         $request->controller = $c;
         $request->params = [];
+        $request->args = [];        
         $n = count($fs);
         foreach($r->args as $m => $ts) {
           if($m == $request->action) {

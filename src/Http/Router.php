@@ -49,15 +49,20 @@ class Router {
     $controller->router = $this;
     $r = (object)[
       'controller' => $controller,
-      'args' => []
+      'args' => [],
+      'segments' => []
     ];
     foreach((new \ReflectionClass($controller))->getMethods() as $m)
       if(substr($m->name, -6) == 'Action') {
+        $name = substr($m->name, 0, strlen($m->name) - 6);
+        if(preg_match_all('/[A-Z][^A-Z]*/', $name, $us)) {
+          $r->segments = array_map(fn($s) => lcfirst($s), $us[0]);
+        }
         if($ps = $m->getParameters()) {
           $a = [];
-          foreach($ps as $p)
-            $a[$p->name] = $p->getType()->getName();
-          $r->args[substr($m->name, 0, strlen($m->name) - 6)] = $a;
+          for($i = 2, $pc = count($ps); $i < $pc; $i++)
+            $a[$ps[$i]->name] = $ps[$i]->getType()->getName();
+          $r->args[$name] = $a;
         }
       }
     $this->controllers["/$c"] = $r;
@@ -122,10 +127,11 @@ class Router {
 
   function resole(Request $request, Response $response) {
     $c = $request->controller;
-    $c->request = $request;
-    $c->response = $response;
     try {
-      $c->{"{$c->request->action}Action"}(...($request->args ?? []));
+      if($request->args)
+        $c->{"{$request->action}Action"}($request, $response, ...($request->args));
+      else
+        $c->{"{$request->action}Action"}($request, $response);
     } catch(\Throwable $e) {
       try {
         $msg = format_backtrace($e);

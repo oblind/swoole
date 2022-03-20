@@ -39,54 +39,42 @@ class Controller {
     static::removeDir($path);
   }
 
-  function write($msg) {
+  function write($msg, Response $response) {
     if(is_object($msg) || is_array($msg))
       $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
-    $this->response->write($msg);
+    $response->write($msg);
   }
 
-  function end($msg = null, Response $res = null) {
-    if(!$res)
-      $res = $this->response;
+  function end($msg, Response $response) {
     if(is_object($msg) || is_array($msg)) {
-      $res->header('Content-Type', 'application/json; charset=utf-8');
+      $response->header('Content-Type', 'application/json; charset=utf-8');
       $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
     } else
-      $res->header('Content-Type', 'text/html; charset=utf-8');
+      $response->header('Content-Type', 'text/html; charset=utf-8');
     $l = strlen($msg) / 1024;
     if($l > 160) { //过大, 以文件形式发送
-      $f = tmpfile();
-      fwrite($f, $msg);
-      $res->sendfile(stream_get_meta_data($f)['uri']);
-      //网速200k/s
-      Timer::after(500 * (ceil($l / 100) + 1), function() use($f) {
-        fclose($f);
-      });
+      $fn = tempnam('/tmp', 'res');
+      file_put_contents($fn, $msg);
+      $response->sendfile($fn);
     } else
-      $res->end($msg);
+      $response->end($msg);
   }
 
-  function error($msg, int $code = Http\RES_BAD_REQUEST, Response $res = null) {
-    if(!$res)
-      $res = $this->response;
-    $res->status($code);
-    $this->end(is_string($msg) ? ['error' => $msg] : $msg, $res);
+  function error($msg, int $code, Response $response) {
+    $response->status($code);
+    $this->end(is_string($msg) ? ['error' => $msg] : $msg, $response);
   }
 
-  function forward(string $path, string $action, array $params = null) {
+  function forward(string $path, string $action, Request $request, Response $response, ...$args) {
     if($c = $this->router->controllers[$path] ?? null) {
       $c = $c->controller;
-      $c->request = $this->request;
-      $c->response = $this->response;
-      if($params)
-        $c->request->params = $params;
-      $c->{"{$action}Action"}();
+      $c->{"{$action}Action"}($request, $response, ...$args);
     }
   }
 
-  function view(string $filename) {
+  function view(string $filename, Response $response) {
     $p = Application::config()['viewPath'] ?? './view';
-    $this->response->sendfile("$p/$filename");
+    $response->sendfile("$p/$filename");
   }
 
   //向用户/设备转发命令
