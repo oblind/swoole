@@ -7,7 +7,7 @@ class Restful extends BaseRoute {
 
   function route(Request $request): bool {
     $ms = ['GET' => 'index', 'POST' => 'store', 'PUT' => 'update', 'DELETE' => 'destroy', 'PATCH' => 'patch', 'HEAD' => 'head', 'TRACE' => 'trace', 'OPTIONS' => 'options'];
-    $uri = $request->server['request_uri'] ?? null;
+    $uri = $request->server['request_uri'] ? strtolower($request->server['request_uri']) : null;
     $a = $ms[$request->server['request_method']] ?? null;
     if(!$uri || !$a)
       return false;
@@ -26,7 +26,7 @@ class Restful extends BaseRoute {
           continue;
         $request->controller = $c;
         $request->params = [];
-        $request->args = [];        
+        $request->args = [];
         $n = count($fs);
         foreach($r->args as $m => $ts) {
           if($m == $request->action) {
