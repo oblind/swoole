@@ -7,14 +7,15 @@ class Restful extends BaseRoute {
 
   function route(Request $request): bool {
     $ms = ['GET' => 'index', 'POST' => 'store', 'PUT' => 'update', 'DELETE' => 'destroy', 'PATCH' => 'patch', 'HEAD' => 'head', 'TRACE' => 'trace', 'OPTIONS' => 'options'];
-    $uri = $request->server['request_uri'] ? strtolower($request->server['request_uri']) : null;
+    $uri = $request->server['request_uri'] ?? null;
+    $uri1 = strtolower($uri);
     $a = $ms[$request->server['request_method']] ?? null;
     if(!$uri || !$a)
       return false;
     foreach($this->router->controllers as $n => $r) {
       $l = strlen($n);
       $c = $r->controller;
-      if($uri == $n || ($l < strlen($uri) && substr($uri, 0, $l) == $n && $uri[$l] == '/')) {
+      if($uri1 == $n || ($l < strlen($uri1) && substr($uri1, 0, $l) == $n && $uri1[$l] == '/')) {
         $fs = static::getFields(substr($uri, $l));
         $i = 0;
         if($fs && ($m = $a . ucfirst($fs[0])) && method_exists($c, "{$m}Action")) {
