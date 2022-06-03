@@ -13,9 +13,19 @@ class Redis extends BaseCache {
       'timeout' => 3,
       'index' => 0
     ], Application::config()['redis'] ?? []);
+    $c = 0;
     $this->redis = new \Redis;
-    $this->redis->pconnect($cfg['host'], $cfg['port'], $cfg['timeout']);
-    $this->redis->select($cfg['index']);
+    _connect:
+    try {
+      $this->redis->pconnect($cfg['host'], $cfg['port'], $cfg['timeout']);
+      $this->redis->select($cfg['index']);
+    } catch(\Throwable $e) {
+      if($c++ < 3) {
+        usleep(50000);
+        goto _connect;
+      } else
+        throw $e;
+    }
   }
 
   function __call($name, $arguments) {
