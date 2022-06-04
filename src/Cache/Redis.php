@@ -37,15 +37,22 @@ class Redis extends BaseCache {
   }
 
   function get($key, $default = null) {
+    $c = 0;
+    _retry:
     try {
       return $this->redis->get($key) ?? $default;
     } catch(\Throwable $e) {
-      $s = "\n\n\n\n" . $e->getMessage();
-      echo "$s\n\n\n";
+      if($c++ < 3) {
+        usleep(50000);
+        goto _retry;
+      } else
+        throw $e;
     }
   }
 
   function set($key, $value, $ttl = null) {
+    $c = 0;
+    _retry:
     try {
       if(is_array($key))
         foreach($key as $k)
@@ -53,8 +60,11 @@ class Redis extends BaseCache {
       else
         $this->redis->set($key, $value, $ttl);
     } catch(\Throwable $e) {
-      $s = "\n\n\n\n" . $e->getMessage();
-      echo "$s\n\n\n";
+      if($c++ < 3) {
+        usleep(50000);
+        goto _retry;
+      } else
+        throw $e;
     }
   }
 
