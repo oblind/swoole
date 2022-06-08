@@ -63,18 +63,24 @@ abstract class CacheModel extends BaseModel {
     return $r;
   }
 
-  static function load() {
+  static function load(int $id = 0) {
     _getcache:
     try {
       $c = static::getCache();
-      if(!static::$loaded) {
-        if(!$c->get('_loaded'))
-          $c->set('_loaded', 1);
-        static::$loaded = true;
-      }
       static::setReturnRaw(true);
-      foreach(parent::get()->toArray() as $m)
-        $c->set(static::PREFIX . ':' . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
+      if($id) {
+        if($m = parent::find($id)) {
+          $c->set(static::PREFIX . ':' . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
+        }
+      } else {
+        if(!static::$loaded) {
+          if(!$c->get('_loaded'))
+            $c->set('_loaded', 1);
+          static::$loaded = true;
+        }
+        foreach(parent::get()->toArray() as $m)
+          $c->set(static::PREFIX . ':' . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
+      }
       static::setReturnRaw(false);
     } catch(\Throwable $e) {
       echo $e->getMessage(), "\n";
