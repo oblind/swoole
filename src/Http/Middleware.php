@@ -19,5 +19,5 @@ abstract class Middleware {
     $this->blacklistMode = $blacklistMode;
   }
 
-  abstract function handle(Request $request, Response $response, callable $next): void;
+  abstract function handle(Request $request, Response $response, callable $next);
 }

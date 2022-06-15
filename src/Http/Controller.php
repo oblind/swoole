@@ -51,7 +51,7 @@ class Controller {
       $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
     } else
       $response->header('Content-Type', 'text/html; charset=utf-8');
-    $l = strlen($msg) / 1024;
+    $l = $msg ? strlen($msg) / 1024 : 0;
     if($l > 160) { //过大, 以文件形式发送
       $fn = tempnam('/tmp', 'res');
       file_put_contents($fn, $msg);

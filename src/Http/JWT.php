@@ -16,5 +16,6 @@ class JWT {
       if(crypt($password, $salt) == $salt)
         return json_decode(substr($s, 0, $p));
     }
+    return null;
   }
 }

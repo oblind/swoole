@@ -158,15 +158,15 @@ class CacheStatement extends Statement {
               return $a->$k <=> $b->$k;
             });
         }
-        $r = new Collection($r);
+        $result = new Collection($r ?? []);
       } else {
-        $r = parent::get($col);
-        $this->cache($r->toArray(), $c);
+        $result = parent::get($col);
+        $this->cache($result->toArray(), $c);
       }
+      $this->class::putCache($c);
+      return $result;
     } catch(\Throwable $e) {
       goto _getcache;
     }
-    $this->class::putCache($c);
-    return $r;
   }
 }
