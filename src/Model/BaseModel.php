@@ -1,10 +1,10 @@
 <?php
 namespace Oblind\Model;
 
-use ReflectionClass;
 use Swoole\Database\PDOConfig;
 use Swoole\Database\PDOPool;
 use Swoole\Database\PDOProxy;
+use Swoole\Database\PDOStatementProxy;
 use Oblind\Application;
 
 class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggregate {
@@ -188,7 +188,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
     return $r;
   }
 
-  static function query(string $sql): \PDOStatement {
+  static function query(string $sql): PDOStatementProxy {
     $c = 0;
     _getdb:
     try {
