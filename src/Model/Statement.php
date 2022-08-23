@@ -128,7 +128,7 @@ class Statement {
     return $this->where([$p => $primary])->first($col);
   }
 
-  function get($col = '*'): Collection {
+  function get(array|string $col = '*'): Collection {
     $r = [];
     $s = $this->statement($col);
     if($s && $s->rowCount()) {
@@ -155,7 +155,7 @@ class Statement {
       yield $v;
   }
 
-  function first($col = '*'): ?BaseModel {
+  function first(array|string $col = '*'): ?BaseModel {
     if(($s = $this->statement($col)) && ($r = $s->fetch())) {
       if($intFields = $this->class::$intFields) {
         foreach($intFields as $k)

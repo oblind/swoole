@@ -149,11 +149,11 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
     return (new Statement(get_called_class()))->find($primary, $col);
   }
 
-  static function get($col = '*'): Collection {
+  static function get(array|string $col = '*'): Collection {
     return (new Statement(get_called_class()))->get($col);
   }
 
-  static function first($col = '*'): ?BaseModel {
+  static function first(array|string $col = '*'): ?BaseModel {
     return (new Statement(get_called_class()))->first($col);
   }
 

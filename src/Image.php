@@ -32,11 +32,11 @@ class Image {
         $h = $h0;
         if($w / $h > $width / $height) {
           if($w > $width) {
-            $h = $h * $width / $w;
+            $h = round($h * $width / $w);
             $w = $width;
           }
         } elseif($h > $height) {
-          $w = $w * $height / $h;
+          $w = round($w * $height / $h);
           $h = $height;
         }
         $img = imagecreatetruecolor($w, $h);
