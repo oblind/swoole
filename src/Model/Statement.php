@@ -52,9 +52,9 @@ class Statement {
         $cs = [];
         foreach($this->condition as $k => $v) {
           if($v === null)
-            $cs[] = "$k is null";
+            $cs[] = "`$k` is null";
           else {
-            $cs[] = "$k = ?";
+            $cs[] = "`$k` = ?";
             $this->params[] = $v;
           }
         }

@@ -7,6 +7,8 @@ use Swoole\Database\PDOProxy;
 use Swoole\Database\PDOStatementProxy;
 use Oblind\Application;
 
+use function Oblind\format_backtrace;
+
 class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggregate {
   protected static PDOPool $dbPool;
   protected static array $tableNames = [];
@@ -16,9 +18,9 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   protected static int $returnRawCount = 0;
   protected static ?array $hiddenFields = null;
   protected static ?array $jsonFields = null;
-  protected static ?array $cacheFields = null;
   protected static ?array $cacheClasses = null;
   protected static ?array $cacheItemClasses = null;
+  public static ?array $cacheFields = null;
   public static ?array $intFields = null;
   public static ?array $floatFields = null;
 
@@ -331,9 +333,9 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
           $k = [];
           foreach($this->_col as $col)
             $k[] = "`$col`=?";
-          $sql = 'update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where ' . static::$primary . '=' . $this->{static::$primary};
+          $sql = 'update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where `' . static::$primary . '`=' . $this->{static::$primary};
           $s = $db->prepare($sql);
-          //$s = $db->prepare('update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where ' . static::$primary . '=' . $this->{static::$primary});
+          //$s = $db->prepare('update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where `' . static::$primary . '`=' . $this->{static::$primary});
           if(!$s->execute($v))
             goto _getdb;
         }
@@ -354,7 +356,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
     _getdb:
     try {
       $db = static::getDatabase();
-      $r = $db->exec('delete from ' . static::getTableName() . ' where ' . static::$primary . '=' . $this->{static::$primary});
+      $r = $db->exec('delete from ' . static::getTableName() . ' where `' . static::$primary . '`=' . $this->{static::$primary});
     } catch(\Throwable $e) {
       if(static::delay($c++))
         goto _getdb;

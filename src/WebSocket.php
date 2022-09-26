@@ -43,9 +43,9 @@ abstract class WebSocket extends SwooleWebSocket {
   /**@var int 日志文件大小, 超出后会被压缩存档 */
   public int $logFileSize = 0x20000;  //128k
   protected bool $savingLog = false;
-  //跨进程设备列表，以fd为key
+  //跨进程设备列表, id => prod
   public Table $tblProds;
-  //跨进程用户列表，以fd为key
+  //跨进程用户列表, id => user
   public Table $tblUsers;
   //product fd => id
   public Table $tblProdIds;

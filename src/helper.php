@@ -20,11 +20,13 @@ const ERROR_STRING = [
 ];
 const E_FATAL = E_ERROR | E_USER_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
 
-function format_backtrace(\Throwable $e): string {
-  $s = $e->getMessage();
-  $msg = $s . "\nStack trace:";
-  if($ec = \Oblind\ERROR_STRING[$e->getCode()] ?? null)
-    $msg = "$ec: $msg";
+function format_backtrace(\Throwable $e = null): string {
+  if($e) {
+    $msg = $e->getMessage() . "\nStack trace:";
+    if($ec = \Oblind\ERROR_STRING[$e->getCode()] ?? null)
+      $msg = "$ec: $msg";
+  } else
+    $msg = 'Stack trace:';
   foreach($e->backtrace ?? debug_backtrace() as $i => $l) {
     $msg .= "\n#$i " . (isset($l['file']) ? "{$l['file']}({$l['line']})" : '[internal function]') . ': ';
     if(isset($l['class']))

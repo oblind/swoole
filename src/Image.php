@@ -26,7 +26,7 @@ class Image {
           $src = imagecreatefrombmp($f);
           break;
         default:
-          throw new Exception(_('unsupported image format'));
+          throw new \Exception(_('unsupported image format'));
         }
         $w = $w0;
         $h = $h0;
