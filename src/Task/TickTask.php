@@ -11,7 +11,7 @@ abstract class TickTask extends Task {
     assert($seconds > 0);
     parent::__construct($webSocket);
     $this->tick = $seconds;
-    $this->time = time() + $seconds;
+    $this->time = time() + rand(10, 20);
   }
 
   function match(int $time): bool {
