@@ -3,12 +3,12 @@ namespace Oblind;
 
 use Swoole\Server as SwooleServer;
 use Swoole\Server\Task;
-use Swoole\Http\Request;
-use Swoole\Http\Response;
 use Swoole\WebSocket\Frame;
 use Swoole\Websocket\Server as SwooleWebSocket;
 use Swoole\Timer;
 use Swoole\Table;
+use Swoole\Http\Request;
+use Swoole\Http\Response;
 use Oblind\Cache\BaseCache;
 use Oblind\Model\BaseModel;
 use Oblind\Http\Router;
@@ -35,12 +35,10 @@ abstract class WebSocket extends SwooleWebSocket {
   const MAX_TABLE_SIZE = 1024;
   //路由
   public Router $router;
-  protected bool $busy = false;
   protected ?array $header = null;
-
-  /**@var string 日志路径 */
+  //日志路径
   public string $logFile = './log/log.txt';
-  /**@var int 日志文件大小, 超出后会被压缩存档 */
+  //日志文件大小, 超出后会被压缩存档
   public int $logFileSize = 0x20000;  //128k
   protected bool $savingLog = false;
   //跨进程设备列表, id => prod
@@ -55,8 +53,10 @@ abstract class WebSocket extends SwooleWebSocket {
   public array $prods = [];
   //worker本地用户列表
   public array $users = [];
+  //日志
+  public Logger $logger;
 
-  function __construct(string $host, int $port = 0, int $mode = SWOOLE_PROCESS, int $sock_type = SWOOLE_SOCK_TCP) {
+  function __construct(string $host, int $port = 0, int $mode = \SWOOLE_PROCESS, int $sock_type = \SWOOLE_SOCK_TCP) {
     $app = Application::app();
     $config = $app::config();
     $setting = [
@@ -71,8 +71,12 @@ abstract class WebSocket extends SwooleWebSocket {
       'pid_file' => $app::$pidFile,
       'log_file' => $this->logFile,
     ];
+    if($workerNum = $config['server']['workerNum'] ?? 0) {
+      $setting['worker_num'] = $workerNum;
+      echo "worker_num: $workerNum\n";
+    }
     if($config['ssl']['enabled'] ?? 0) {
-      $sock_type |= SWOOLE_SSL;
+      $sock_type |= \SWOOLE_SSL;
       $setting['ssl_cert_file'] = $config['ssl']['certFile'] ?? '/etc/ssl/certs/ssl-cert-snakeoil.pem';
       $setting['ssl_key_file'] = $config['ssl']['keyFile'] ?? '/etc/ssl/private/ssl-cert-snakeoil.key';
     }
@@ -84,11 +88,12 @@ abstract class WebSocket extends SwooleWebSocket {
     $p = dirname($this->logFile);
     if(!is_dir($p)) //建立日志目录
       mkdir($p);
+    $this->logger = new Logger($this->logFile, $this->logFileSize);
 
     $this->router = new Router($this);
     $this->header = $config['server']['header'] ?? null;
 
-    foreach(['Shutdown', 'Finish', 'Open', 'Close', 'Disconnect', 'Message'] as $e)
+    foreach(['Shutdown', 'Finish', 'Close', 'Disconnect', 'Message'] as $e)
       $this->on($e, function(SwooleWebSocket $svr, ...$args) use($e) {
         $e = "on$e";
         $this->$e(...$args);
@@ -107,10 +112,7 @@ abstract class WebSocket extends SwooleWebSocket {
     $this->on('workerStart', function(SwooleServer $svr, int $wid) {
       //将普通错误转为异常
       set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline) {
-        $e = new \Exception("$errstr in $errfile($errline)", $errno);
-        //不保留参数
-        $e->backtrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS);
-        throw $e;
+        throw new \Exception("$errstr in $errfile($errline)", $errno);
       });
       //记录致命错误
       register_shutdown_function(function() {
@@ -118,11 +120,10 @@ abstract class WebSocket extends SwooleWebSocket {
         //if($e && ($e['type'] & E_FATAL)) {
         if($e) {
           $this->onCrash();
-          $msg = ERROR_STRING[$e['type']] . ": {$e['message']} in {$e['file']}({$e['line']})";
+          $msg = 'CRITICAL ERROR! ' . ERROR_STRING[$e['type']] . ": {$e['message']} in {$e['file']}({$e['line']})";
           $this->show($msg, true);
         }
       });
-      \Swoole\Runtime::enableCoroutine();
       //初始化独立缓存池
       BaseCache::initCachePool();
       BaseModel::initDatabasePool();
@@ -131,10 +132,8 @@ abstract class WebSocket extends SwooleWebSocket {
       BaseModel::putDatabase(BaseModel::getDatabase());
       if($this->taskworker) {
         cli_set_process_title(Application::app()::$prefix . "_task$wid");
-        $this->logs = [];
         Timer::tick(2000, function() {
-          if($this->logs)
-            $this->writeLogs();
+          $this->logger->writeLogs();
         });
         $this->onTaskWorkerStart($wid);
       } else {
@@ -151,7 +150,11 @@ abstract class WebSocket extends SwooleWebSocket {
         $this->onWorkerStop($wid);
     });
 
-    $this->on('request', function(Request $request, Response $response) {
+    $this->on('open', function(SwooleWebSocket $svr, \Swoole\Http\Request $request) {
+      $this->onOpen($request);
+    });
+
+    $this->on('request', function(\Swoole\Http\Request $request, \Swoole\Http\Response $response) {
       if($this->header)
         foreach($this->header as $k => $v)
           $response->header($k, $v);
@@ -211,7 +214,7 @@ abstract class WebSocket extends SwooleWebSocket {
   function onPipeMessage(int $src_wid, $d) {
   }
 
-  function onOpen(Request $req) {
+  function onOpen(Request $request) {
   }
 
   function onClose(int $fd, int $rid) {
@@ -239,15 +242,17 @@ abstract class WebSocket extends SwooleWebSocket {
   }
 
   function onRequest(Request $request, Response $response) {
-    while($this->busy)
-      usleep(1000);
-    $this->busy = true;
-    if(!$this->router->dispatch($request, $response)) {
-      $response->status(\Oblind\Http\RES_NOT_FOUND);
-      $response->header('content-type', 'text/html;charset=utf-8');
-      $this->pageNotFound($request, $response);
+    try {
+      if(!$this->router->dispatch($request, $response)) {
+        $response->status(\Oblind\Http\RES_NOT_FOUND);
+        $response->header('content-type', 'text/html;charset=utf-8');
+        $this->pageNotFound($request, $response);
+      }
+    } catch(\Throwable $e) {
+      $msg = "{$request->server['request_method']} {$request->server['request_uri']}\nEXCEPTION in "
+        . static::class . "->onRequest()\n";
+      $this->show($msg . format_backtrace($e));
     }
-    $this->busy = false;
   }
 
   abstract function onMessage(Frame $f);
@@ -259,7 +264,7 @@ abstract class WebSocket extends SwooleWebSocket {
       if(is_array($data) || is_object($data))
         $data = json_encode($data, JSON_UNESCAPED_UNICODE);
       if(is_string($data) && strlen($data) > 31)
-        $flags |= SWOOLE_WEBSOCKET_FLAG_COMPRESS;
+        $flags |= \SWOOLE_WEBSOCKET_FLAG_COMPRESS;
       return parent::push($fd, $data, $opcode, $flags);
     }
     return true;
@@ -288,7 +293,7 @@ abstract class WebSocket extends SwooleWebSocket {
   }
 
   protected function addLog($l) {
-    $this->logs[] = '[' . date(DATE_ATOM) . "] $l\n";
+    $this->logger->addLog($l);
   }
 
   function log(string $l, bool $force = false) {
@@ -307,24 +312,7 @@ abstract class WebSocket extends SwooleWebSocket {
 
   function writeLogs(bool $force = false) {
     if($this->taskworker || $force) {
-      if($this->taskworker && !$this->savingLog) {
-        $this->savingLog = true;
-        //清除文件缓存, 否则filesize 返回值不变
-        clearstatcache();
-        //日志文件超过限制后压缩存档
-        if($this->taskworker && file_exists($this->logFile) && filesize($this->logFile) >= $this->logFileSize) {
-          $i = 0;
-          $p = dirname(realpath($this->logFile)) . '/' . Application::app()::$prefix;
-          while(file_exists($f = "$p$i.log.bz2"))
-            $i++;
-          if(copy($this->logFile, "compress.bzip2://$f"))
-            file_put_contents($this->logFile, '');
-        }
-        $this->savingLog = false;
-      }
-      foreach($this->logs as $l)
-        error_log($l, 3, $this->logFile);
-      $this->logs = [];
+      $this->logger->writeLogs();
     } else
       $this->task(json_encode(['cmd' => 'writeLogs']), 0);
   }

@@ -20,14 +20,12 @@ const ERROR_STRING = [
 ];
 const E_FATAL = E_ERROR | E_USER_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
 
-function format_backtrace(\Throwable $e = null): string {
-  if($e) {
-    $msg = $e->getMessage() . "\nStack trace:";
-    if($ec = \Oblind\ERROR_STRING[$e->getCode()] ?? null)
-      $msg = "$ec: $msg";
-  } else
-    $msg = 'Stack trace:';
-  foreach($e->backtrace ?? debug_backtrace() as $i => $l) {
+function format_backtrace(\Throwable $e): string {
+  $msg = $e->getMessage() . "\nStack trace:";
+  if($ec = \Oblind\ERROR_STRING[$e->getCode()] ?? null)
+    $msg = "$ec: $msg";
+  //不保留参数
+  foreach(debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS) as $i => $l) {
     $msg .= "\n#$i " . (isset($l['file']) ? "{$l['file']}({$l['line']})" : '[internal function]') . ': ';
     if(isset($l['class']))
       $msg .= "{$l['class']}{$l['type']}";
@@ -47,4 +45,14 @@ function base64url_decode(string $s): string {
   if($l = strlen($s) % 4)
     $s .= str_repeat('=', 4 - $l);
   return base64_decode(str_replace('_', '/', str_replace('-', '+', $s)));
+}
+
+function base642image(string $url, &$ext): string|false {
+  if(str_starts_with($url, 'data:image/') && ($p = strpos($url, ';base64,'))) {
+    $ext = substr($url, 11, $p - 11);
+    if($q = strpos($ext, '+'))
+      $ext = substr($ext, 0, $q);
+    return base64_decode(substr($url, $p + 8));
+  }
+  return false;
 }

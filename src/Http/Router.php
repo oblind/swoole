@@ -16,6 +16,7 @@ const RES_NO_PERMISSION = 401;
 const RES_FORBIDEN = 403;
 const RES_NOT_FOUND = 404;
 const RES_NOT_ALLOWED = 405;
+const RES_INTERNAL_SERVER_ERROR = 500;
 
 function isLocalIp(string $ip): bool {
   return ($h = substr($ip, 0, 4)) == '192.' || $h == '127.' || substr($ip, 0, 3) == '10.';
@@ -60,7 +61,7 @@ class Router {
         }
         if($ps = $m->getParameters()) {
           $a = [];
-          for($i = 2, $pc = count($ps); $i < $pc; $i++)
+          for($i = 3, $pc = count($ps); $i < $pc; $i++)
             $a[$ps[$i]->name] = $ps[$i]->getType()->getName();
           $r->args[$name] = $a;
         }
@@ -111,32 +112,32 @@ class Router {
     $this->act('DELETE', $rule, $route, $name, $router);
   }
 
-  function route(Request $request): bool {
+  function route(Request $request): ?RequestInfo {
     $this->curRoute = null;
     foreach($this->routes as $r)
-      if($r->route($request)) {
+      if($info = $r->route($request)) {
         $this->curRoute = $r;
-        return true;
+        return $info;
       }
-    if($this->defaultRoute->route($request)) {
+    if($info = $this->defaultRoute->route($request)) {
       $this->curRoute = $this->defaultRoute;
-      return true;
+      return $info;
     }
-    return false;
+    return null;
   }
 
-  function resole(Request $request, Response $response) {
-    $c = $request->controller;
+  function resole(Request $request, Response $response, RequestInfo $info) {
+    $c = $info->controller;
     try {
-      if($request->args)
-        $c->{"{$request->action}Action"}($request, $response, ...($request->args));
+      if($info->args)
+        $c->{"{$info->action}Action"}($request, $response, $info, ...($info->args));
       else
-        $c->{"{$request->action}Action"}($request, $response);
+        $c->{"{$info->action}Action"}($request, $response, $info);
     } catch(\Throwable $e) {
       try {
-        $msg = format_backtrace($e);
-        echo "$msg\n";
-        $c->svr->log($msg);
+        $msg = "{$request->server['request_method']} {$request->server['request_uri']}\nEXCEPTION in "
+          . get_class($c) . "->{$info->action}Action()\n" . format_backtrace($e);
+        $c->svr->show($msg);
         $response->status(RES_BAD_REQUEST);
         $response->end($request->header['x-requested-with'] ?? 0 == 'XMLHttpRequest' ? $msg : str_replace("\n", "<br>\n", $msg));
       } catch(\Throwable $e) { //response已关闭
@@ -145,23 +146,28 @@ class Router {
   }
 
   function dispatch(Request $request, Response $response): bool {
-    if($this->route($request)) {
-      if((($m = $request->server['request_method']) == 'POST' || $m == 'PUT') && strpos($request->header['content-type'] ?? 0, 'application/json') !== false)
+    if($info = $this->route($request)) {
+      if((($method = $request->server['request_method']) == 'POST' || $method == 'PUT') && strpos($request->header['content-type'] ?? 0, 'application/json') !== false)
         $request->post = json_decode($request->rawContent(), true);
       if($this->curRoute->middlewares) {
         $p = new Pipeline;
-        $p->send($request, $response);
+        $p->send($request, $response, $info);
         foreach($this->curRoute->middlewares as $m) {
           $in = in_array($this->curRoute->name, $m->exceptions);
-          if($m->blacklistMode) {
-            if($in)
+          try {
+            if($m->blacklistMode) {
+              if($in)
+                $p->pipe([$m, 'handle']);
+            } elseif(!$in)
               $p->pipe([$m, 'handle']);
-          } elseif(!$in)
-            $p->pipe([$m, 'handle']);
+          } catch(\Throwable $e) {
+            $msg = 'EXCEPTION in ' . get_class($m) . "->handle()\n" . format_backtrace($e);
+            $this->svr->show($msg);
+          }
         }
         $p->then([$this, 'resole']);
       } else
-        $this->resole($request, $response);
+        $this->resole($request, $response, $info);
       return true;
     }
     return false;

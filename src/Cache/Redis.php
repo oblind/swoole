@@ -6,25 +6,29 @@ use Oblind\Application;
 class Redis extends BaseCache {
   public \Redis $redis;
 
-  function __construct(string $prefix = null) {
+  function __construct() {
     $cfg = array_merge([
       'host' => 'localhost',
       'port' => 6379,
       'timeout' => 3,
       'index' => 0
     ], Application::config()['redis'] ?? []);
-    $c = 0;
     $this->redis = new \Redis;
-    _connect:
-    try {
-      $this->redis->pconnect($cfg['host'], $cfg['port'], $cfg['timeout']);
-      $this->redis->select($cfg['index']);
-    } catch(\Throwable $e) {
-      if($c++ < 3) {
-        usleep(50000);
-        goto _connect;
-      } else
-        throw $e;
+    $c = 100;
+    while(1) {
+      try {
+        if(static::$persistent)
+          $this->redis->pconnect($cfg['host'], $cfg['port'], $cfg['timeout']);
+        else
+          $this->redis->connect($cfg['host'], $cfg['port'], $cfg['timeout']);
+        $this->redis->select($cfg['index']);
+        break;
+      } catch(\Throwable $e) {
+        if($c--)
+          usleep(50000);
+        else
+          throw $e;
+      }
     }
   }
 

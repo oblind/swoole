@@ -3,6 +3,7 @@ namespace Oblind\Http;
 
 use Swoole\Http\Request;
 use Swoole\Http\Response;
+use Oblind\Http\RequestInfo;
 
 abstract class Middleware {
   public array $exceptions;
@@ -19,5 +20,5 @@ abstract class Middleware {
     $this->blacklistMode = $blacklistMode;
   }
 
-  abstract function handle(Request $request, Response $response, callable $next);
+  abstract function handle(Request $request, Response $response, RequestInfo $info, callable $next);
 }

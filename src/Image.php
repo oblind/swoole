@@ -7,22 +7,22 @@ use Swoole\MySQL\Exception;
 class Image {
 
   static function resize(string $f, int $width, int $height, &$ext): bool {
-    $exts = [1 => 'gif', 2 => 'jpg', 3 => 'png', 6 => 'bmp'];
+    $exts = [IMAGETYPE_GIF => 'gif', IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_BMP => 'bmp'];
     [$w0, $h0, $t] = getimagesize($f);
     if($t) {
       $ext = $exts[$t];
       if($w0 > $width || $h0 > $height) {
         switch($t) {
-        case 1: //gif
+        case IMAGETYPE_GIF: //gif
           $src = imagecreatefromgif($f);
           break;
-        case 2: //jpg
+        case IMAGETYPE_JPEG://jpg
           $src = imagecreatefromjpeg($f);
           break;
-        case 3: //png
+        case IMAGETYPE_PNG: //png
           $src = imagecreatefrompng($f);
           break;
-        case 6: //bmp
+        case IMAGETYPE_BMP: //bmp
           $src = imagecreatefrombmp($f);
           break;
         default:
@@ -44,16 +44,16 @@ class Image {
         imagesavealpha($img, true);
         imagecopyresampled($img, $src, 0, 0, 0, 0, $w, $h, $w0, $h0);
         switch($t) {
-        case 1:
+        case IMAGETYPE_GIF:
           imagegif($img, $f);
           break;
-        case 2:
+        case IMAGETYPE_JPEG:
           imagejpeg($img, $f);
           break;
-        case 3:
+        case IMAGETYPE_PNG:
           imagepng($img, $f);
           break;
-        case 6:
+        case IMAGETYPE_BMP:
           imagebmp($img, $f);
         }
         imagedestroy($img);

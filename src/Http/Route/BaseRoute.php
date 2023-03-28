@@ -2,6 +2,7 @@
 namespace Oblind\Http\Route;
 
 use Swoole\Http\Request;
+use Oblind\Http\RequestInfo;
 use Oblind\Http\Router;
 use Oblind\Http\Controller;
 use Oblind\Http\Middleware;
@@ -9,13 +10,16 @@ use Oblind\Http\Middleware;
 abstract class BaseRoute {
   public Router $router;
   public string $name;
+  public ?Controller $controller;
+  public ?string $action;
+  public array $params;
   public array $middlewares = [];
 
-  function __construct(Router $router, Controller $controller = null, string $action = null, array $params = null) {
+  function __construct(Router $router, Controller $controller = null, string $action = null, array $params = []) {
     $this->router = $router;
     $this->controller = $controller;
     $this->action = $action;
-    $this->params = $params ?? [];
+    $this->params = [];
   }
 
   static function getField(string $uri, int &$offset): ?string {
@@ -57,5 +61,5 @@ abstract class BaseRoute {
     return $this;
   }
 
-  abstract function route(Request $request): bool;
+  abstract function route(Request $request): ?RequestInfo;
 }

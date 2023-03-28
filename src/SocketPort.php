@@ -20,7 +20,11 @@ class SocketPort {
     });
 
     $socket->on('receive', function($svr, $fd, $rid, $data) {
-      $this->onReceive($svr, $fd, $rid, $data);
+      try {
+        $this->onReceive($svr, $fd, $rid, $data);
+      } catch(\Throwable $e) {
+        $svr->show('EXCEPTION in ' . static::class . "->onReceive()\n" . format_backtrace($e));
+      }
     });
 
     $socket->on('close', function($svr, $fd) {

@@ -4,22 +4,26 @@ require './controller/IndexController.php';
 require './controller/Api/TestController.php';
 require './middleware/AuthMiddleware.php';
 
-use Swoole\Server as SwooleServer;
 use Swoole\WebSocket\Frame;
-use Swoole\WebSocket\Server as SwooleWebSocket;
 use Oblind\WebSocket as Server;
 use Oblind\Http\LanguageHttpPort;
 use Swoole\Api\TestController;
 use Swoole\AuthMiddleware;
 use Oblind\Application;
+use Oblind\Cache\BaseCache;
+use Oblind\Cache\Redis;
 
 class WebSocket extends Server {
 
-  function onWorkerStart(SwooleServer $svr, int $wid) {
+  function getCache(): BaseCache {
+    return Redis::getCache();
+  }
+
+  function onWorkerStart(int $wid) {
     echo "$wid worker start\n";
   }
 
-  function onMessage(SwooleWebSocket $svr, Frame $f) {
+  function onMessage(Frame $f) {
 
   }
 }
@@ -31,7 +35,7 @@ class App extends Application {
     $http = new LanguageHttpPort($svr, '0.0.0.0', 9200);
     $http->router->addController(new IndexController, '/');
     $http->router->addController(new TestController);
-    $http->router->defaultRoute->insertMiddleware([new AuthMiddleware]);
+    $http->router->defaultRoute->addMiddleware(new AuthMiddleware);
     $svr->start();
   }
 }

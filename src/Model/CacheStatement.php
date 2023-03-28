@@ -50,13 +50,18 @@ class CacheStatement extends Statement {
     if($this->condition) {
       $i = 0;
       $cs = [];
-      foreach($this->condition as $k => $v)
+      $ks = [];
+      foreach($this->condition as $k => $v) {
         if(is_string($k)) {
+          $ks[] = $k;
           if(is_array($v)) {
             for($j = 0, $c = count($v); $j < $c; $j += 2) {
               if(is_string($v[$j]))
                 $v[$j] = '\'' . addslashes($v[$j]) . '\'';
-              $cs[] = "(\$m->$k {$v[$j + 1]} {$v[$j]})";
+              elseif($v[$j] === null)
+                $v[$j] = 'null';
+              $op = $v[$j + 1] ?? '==';
+              $cs[] = "(\$m->$k $op {$v[$j]})";
             }
           } else {
             if(is_string($v))
@@ -73,6 +78,11 @@ class CacheStatement extends Statement {
             break;
           }*/
         }
+      }
+      if($ks)
+        array_unshift($cs, 'isset(' . implode(', ', array_map(function($k) {
+          return "\$m->$k";
+        }, $ks)) . ')');
       $c = 'return ' . implode(' && ', $cs) . ';';
     } else
       $c = null;
@@ -83,8 +93,10 @@ class CacheStatement extends Statement {
           $r[] = $this->prune($m, $col);
       }
       return $r;
-    } elseif(($m = json_decode($cache->get($key))) && (!$c || eval($c)))
-      return $this->prune($m, $col);
+    } elseif(($m = json_decode($cache->get($key)))) {
+      if(!$c || eval($c))
+        return $this->prune($m, $col);
+    }
   }
 
   function find($primary, $col = '*') {
@@ -101,6 +113,7 @@ class CacheStatement extends Statement {
       } else
         $r = $this->match($this->prefix . ':' . $primary, $col, $c);
     } catch(\Throwable $e) {
+      echo "EXCEPTION in CacheStatement->find(), ", $e->getMessage(), "\n";
       goto _getcache;
     }
     $this->class::putCache($c);
@@ -124,6 +137,7 @@ class CacheStatement extends Statement {
       } else
         $r = null;
     } catch(\Throwable $e) {
+      echo "EXCEPTION in CacheStatement->first(), ", $e->getMessage(), "\n";
       goto _getcache;
     }
     _end:
@@ -166,6 +180,7 @@ class CacheStatement extends Statement {
       $this->class::putCache($c);
       return $result;
     } catch(\Throwable $e) {
+      echo "EXCEPTION in CacheStatement->get(), ", $e->getMessage(), "\n";
       goto _getcache;
     }
   }

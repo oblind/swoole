@@ -6,6 +6,7 @@ use Countable;
 use IteratorAggregate;
 use ArrayIterator;
 use JsonSerializable;
+use Traversable;
 
 class Collection extends Decachable implements ArrayAccess, Countable, IteratorAggregate, JsonSerializable {
   protected $_cacheItemClass;
@@ -35,7 +36,7 @@ class Collection extends Decachable implements ArrayAccess, Countable, IteratorA
     return $this->_data;
   }
 
-  function offsetExists($offset) {
+  function offsetExists($offset): bool {
     return isset($this->_data[$offset]);
   }
 
@@ -43,23 +44,23 @@ class Collection extends Decachable implements ArrayAccess, Countable, IteratorA
     return $this->_data[$offset];
   }
 
-  function offsetSet($offset, $value) {
+  function offsetSet($offset, $value): void {
     $this->_data[$offset] = $value;
     if(!$this->_decaching && $this->_parent)
       $this->_parent->onChange($this->_parentKey);
   }
 
-  function offsetUnset($offset) {
+  function offsetUnset($offset): void {
     unset($this->_data[$offset]);
     if($this->_parent)
       $this->_parent->onChange($this->_parentKey);
   }
 
-  function count() {
+  function count(): int {
     return count($this->_data);
   }
 
-  function getIterator() {
+  function getIterator(): Traversable {
     return new ArrayIterator($this->_data);
   }
 

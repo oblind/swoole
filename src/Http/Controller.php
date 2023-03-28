@@ -3,8 +3,8 @@ namespace Oblind\Http;
 
 use Swoole\Http\Request;
 use Swoole\Http\Response;
-use Swoole\Timer;
-use Oblind\Http;
+use Oblind\Http\RequestInfo;
+use Oblind\Http\Router;
 use Oblind\Application;
 use Oblind\WebSocket;
 use Oblind\Model\BaseModel;
@@ -12,8 +12,6 @@ use Oblind\Model\BaseModel;
 class Controller {
   public WebSocket $svr;
   public Router $router;
-  public Request $request;
-  public Response $response;
 
   static protected function removeDir(string $path): int {
     if(is_dir($path)) {
@@ -65,10 +63,10 @@ class Controller {
     $this->end(is_string($msg) ? ['error' => $msg] : $msg, $response);
   }
 
-  function forward(string $path, string $action, Request $request, Response $response, ...$args) {
+  function forward(string $path, string $action, Request $request, Response $response, RequestInfo $info, ...$args) {
     if($c = $this->router->controllers[$path] ?? null) {
       $c = $c->controller;
-      $c->{"{$action}Action"}($request, $response, ...$args);
+      $c->{"{$action}Action"}($request, $response, $info, ...$args);
     }
   }
 

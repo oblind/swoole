@@ -43,14 +43,14 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
     }
   }
 
-  static function initDatabasePool() {
+  static function initDatabasePool(bool $persistent = true) {
     $cfg = Application::config()['db'];
     static::$config = (new PDOConfig)->withHost($cfg['host'])
     ->withPort($cfg['port'])->withDbname($cfg['database'])
     ->withUsername($cfg['user'])->withPassword($cfg['password'])
     ->withOptions([
       //持久连接
-      \PDO::ATTR_PERSISTENT => true,
+      \PDO::ATTR_PERSISTENT => $persistent,
       //返回对象, FETCH_ASSOC: 返回数组
       \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_OBJ,
       //不对数字转化字符串
@@ -61,10 +61,6 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
     static::$dbPool = new PDOPool(static::$config);
   }
 
-  static function delay(int $c): bool {
-    return Statement::delay($c);
-  }
-
   static function getDatabase(): PDOProxy {
     $c = 0;
     _getdb:
@@ -72,6 +68,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
       $r = static::$dbPool->get();
       return $r;
     } catch(\Throwable $e) {
+      echo 'EXCEPTION in ' . static::class . '->first(), ', $e->getMessage(), "\n";
       if($c++ < 100) {
         usleep(50000);
         goto _getdb;
@@ -139,6 +136,10 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
     return (new Statement(get_called_class()))->where($condition, $params);
   }
 
+  static function groupBy(array|string $by): Statement {
+    return (new Statement(get_called_class()))->groupBy($by);
+  }
+
   static function orderBy(string $by, bool $order = false): Statement {
     return (new Statement(get_called_class()))->orderBy($by, $order);
   }
@@ -175,33 +176,15 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   }
 
   static function exec(string $sql): int {
-    $c = 0;
-    _getdb:
-    try {
-      $db = static::getDatabase();
-      $r = $db->exec($sql);
-    } catch(\Throwable $e) {
-      if(static::delay($c++))
-        goto _getdb;
-      else
-        throw $e;
-    }
+    $db = static::getDatabase();
+    $r = $db->exec($sql);
     static::putDatabase($db);
     return $r;
   }
 
   static function query(string $sql): PDOStatementProxy {
-    $c = 0;
-    _getdb:
-    try {
-      $db = static::getDatabase();
-      $r = $db->query($sql);
-    } catch(\Throwable $e) {
-      if(static::delay($c++))
-        goto _getdb;
-      else
-        throw $e;
-    }
+    $db = static::getDatabase();
+    $r = $db->query($sql);
     static::putDatabase($db);
     return $r;
   }
@@ -310,62 +293,41 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
     return static::$tableNames[$cn];
   }
 
-  function save() {
+  function save(): int {
     if($this->_col) {
       foreach($this->_col as $col)
         $v[] = static::$jsonFields && in_array($col, static::$jsonFields) && $this->$col !== null
           ? json_encode($this->$col, JSON_UNESCAPED_UNICODE) : $this->$col;
-      $c = 0;
-      _getdb:
-      try {
-        $db = static::getDatabase();
-        $cs = [];
-        if($this->_create) {
-          foreach($this->_col as $col)
-            $cs[] = "`$col`";
-          $s = $db->prepare('insert into ' . static::getTableName() . ' (' . implode(', ', $cs) . ') values (' . implode(', ', array_fill(0, count($this->_col), '?')) . ')');
-          if(!$s->execute($v))
-            goto _getdb;
-          if(static::$autoIncrease)
-            $this->{static::$primary} = intval($db->lastInsertId(static::$primary));
-          $this->_create = false;
-        } else {
-          $k = [];
-          foreach($this->_col as $col)
-            $k[] = "`$col`=?";
-          $sql = 'update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where `' . static::$primary . '`=' . $this->{static::$primary};
-          $s = $db->prepare($sql);
-          //$s = $db->prepare('update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where `' . static::$primary . '`=' . $this->{static::$primary});
-          if(!$s->execute($v))
-            goto _getdb;
-        }
-      } catch(\Throwable $e) {
-        if(static::delay($c++))
-          goto _getdb;
-        else
-          throw $e;
+      $db = static::getDatabase();
+      $cs = [];
+      if($this->_create) {
+        foreach($this->_col as $col)
+          $cs[] = "`$col`";
+        $s = $db->prepare('insert into ' . static::getTableName() . ' (' . implode(', ', $cs) . ') values (' . implode(', ', array_fill(0, count($this->_col), '?')) . ')');
+        if(!$s->execute($v))
+          return -1;
+        if(static::$autoIncrease)
+          $this->{static::$primary} = intval($db->lastInsertId(static::$primary));
+        $this->_create = false;
+      } else {
+        $k = [];
+        foreach($this->_col as $col)
+          $k[] = "`$col`=?";
+        $sql = 'update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where `' . static::$primary . '`=' . $this->{static::$primary};
+        $s = $db->prepare($sql);
+        if(!$s->execute($v))
+          return -1;
       }
       $this->_col = [];
       static::putDatabase($db);
     }
-    parent::save();
+    return parent::save();
   }
 
-  function delete() {
-    $c = 0;
-    _getdb:
-    try {
-      $db = static::getDatabase();
-      $r = $db->exec('delete from ' . static::getTableName() . ' where `' . static::$primary . '`=' . $this->{static::$primary});
-    } catch(\Throwable $e) {
-      if(static::delay($c++))
-        goto _getdb;
-      else
-        throw $e;
-    }
+  function delete(): int|false {
+    $db = static::getDatabase();
+    $r = $db->exec('delete from ' . static::getTableName() . ' where `' . static::$primary . '`=' . $this->{static::$primary});
     static::putDatabase($db);
     return $r;
   }
 }
-
-BaseModel::initDatabasePool();

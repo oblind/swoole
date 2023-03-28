@@ -2,11 +2,13 @@
 namespace Oblind\Cache;
 
 trait CacheTrait {
+  protected static bool $persistent;
   protected static \SplQueue $pool;
 
   abstract static function createCache(): BaseCache;
 
-  static function initCachePool() {
+  static function initCachePool(bool $persistent = true) {
+    static::$persistent = $persistent;
     static::$pool = new \SplQueue;
   }
 
@@ -20,5 +22,3 @@ trait CacheTrait {
     static::$pool->push($cache);
   }
 }
-
-CacheTrait::initCachePool();

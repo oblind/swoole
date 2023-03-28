@@ -15,18 +15,20 @@ abstract class DailyTask extends Task {
     }
   }
 
+  function success() {
+    parent::success();
+    $this->update(time() + 1);
+  }
+
   function match(int $time): bool {
-    if($time >= $this->time) {
-      $this->update($time + 1);
-      return true;
-    }
-    return false;
+    return $time >= $this->time;
   }
 
   protected function update($time) {
     $this->time = strtotime(date('Y-m-d') . ' ' . $this->at);
     if($this->time < $time)
       $this->time += 86400;
-    echo 'next time: ', date('Y-m-d H:i:s', $this->time), "\n";
+    if($this->svr->master_pid)
+      $this->svr->show('next time: ' . date('Y-m-d H:i:s', $this->time));
   }
 }

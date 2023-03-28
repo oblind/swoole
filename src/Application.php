@@ -104,6 +104,8 @@ class Application {
       static::$app = $this;
       static::$config['daemonize'] = in_array(static::$daemonizeFlag, $_SERVER['argv']);
       echo 'daemonize: ', static::$config['daemonize'] ? 'yes' : 'no', "\n";
+      \Swoole\Runtime::enableCoroutine();
+
       $this->onStart();
     }
   }

@@ -25,12 +25,13 @@ abstract class Decachable {
     }
   }
 
-  function save() {
+  function save(): int {
     if(is_array($this->_data))
       foreach($this->_save as $f)
         $this->_data[$f]->save();
     else
       foreach($this->_save as $f)
         $this->_data->$f->save();
+    return 0;
   }
 }

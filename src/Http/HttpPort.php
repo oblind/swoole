@@ -6,6 +6,7 @@ use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Oblind\WebSocket;
 use Oblind\Application;
+use Oblind\Http\RequestInfo;
 
 const RES_BAD_REQUEST = 400;
 const RES_NO_PERMISSION = 401;
@@ -26,11 +27,12 @@ class HttpPort {
     $this->http = $svr->addListener($host, $port, $type);
     $this->router = new Router($svr);
     $this->header = Application::app()::config()['server']['header'] ?? null;
-    $this->http->on('request', function(Request $request, Response $response) {
+    $this->http->on('request', function(\Swoole\Http\Request $request, Response $response) {
       if($this->header)
         foreach($this->header as $k => $v)
           $response->header($k, $v);
-      $this->onRequest($request, $response);
+      $req = new Request;
+      $this->onRequest($req, $response);
     });
   }
 

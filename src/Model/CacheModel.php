@@ -93,36 +93,26 @@ abstract class CacheModel extends BaseModel {
     return $this->_data;
   }
 
-  function save() {
+  function save(): int {
     $create = $this->_create;
-    parent::save();
+    $r = parent::save();
     static::setReturnRaw(true);
-    _getcache:
-    try {
-      $c = static::getCache();
-      if($create) {
-        $m = parent::find($this->{static::$primary});
-        $this->_data = $m->_data;
-      }
-      $c->set(static::PREFIX . ':' . $this->{static::$primary}, json_encode($this->_data, JSON_UNESCAPED_UNICODE));
-      static::setReturnRaw(false);
-    } catch(\Throwable $e) {
-      echo $e->getMessage(), "\n";
-      goto _getcache;
+    $c = static::getCache();
+    if($create) {
+      $m = parent::find($this->{static::$primary});
+      $this->_data = $m->_data;
     }
+    $c->set(static::PREFIX . ':' . $this->{static::$primary}, json_encode($this->_data, JSON_UNESCAPED_UNICODE));
+    static::setReturnRaw(false);
     static::putCache($c);
+    return $r;
   }
 
-  function delete() {
-    parent::delete();
-    _getcache:
-    try {
-      $c = static::getCache();
-      $c->delete(static::PREFIX . ':' . $this->{static::$primary});
-    } catch(\Throwable $e) {
-      echo $e->getMessage(), "\n";
-      goto _getcache;
-    }
+  function delete(): int|false {
+    $r = parent::delete();
+    $c = static::getCache();
+    $c->delete(static::PREFIX . ':' . $this->{static::$primary});
     static::putCache($c);
+    return $r;
   }
 }

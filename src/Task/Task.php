@@ -9,6 +9,19 @@ abstract class Task {
   function __construct(Websocket $webSocket) {
     $this->svr = $webSocket;
   }
+
+  function beforeExecute() {
+    $this->busy = true;
+  }
+
+  function success() {
+    $this->busy = false;
+  }
+
+  function fail() {
+    $this->busy = false;
+  }
+
   abstract function match(int $time): bool;
   abstract function execute();
 }

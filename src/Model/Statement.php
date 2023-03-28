@@ -3,15 +3,14 @@ namespace Oblind\Model;
 
 use Swoole\Database\PDOStatementProxy;
 
+use function Oblind\format_backtrace;
+
 class Statement {
-  /**@var string */
   protected string $class;
   protected $condition;
-  /**@var array */
   protected ?array $params = null;
-  /**@var array */
+  protected string|array|null $groupBy = null;
   protected ?array $orderBy = null;
-  /**@var array */
   protected ?array $limit = null;
 
   function __construct(string $class) {
@@ -35,14 +34,6 @@ class Statement {
       }
     return false;
   }*/
-
-  static function delay(int $c): bool {
-    if($c > 1)
-      usleep(100000);
-    elseif($c)
-      usleep(50000);
-    return $c++ < 3;
-  }
 
   protected function addCondition(string &$sql) {
     if($this->condition) {
@@ -70,32 +61,28 @@ class Statement {
   }
 
   protected function statement($col): ?PDOStatementProxy {
-    $c = 0;
-    _getdb:
-    try {
-      $db = $this->class::getDatabase();
-      $sql = 'select ' . (is_array($col) ? implode(', ', array_map(function($v) {
+    $db = $this->class::getDatabase();
+    $sql = 'select ' . (is_array($col) ? implode(', ', array_map(function($v) {
+      return "`$v`";
+    }, $col)) : $col) . ' from `' . $this->class::getTableName() . '`';
+    $this->addCondition($sql);
+    if($this->groupBy) {
+      $sql .= " group by " . (is_string($this->groupBy) ? "`$this->groupBy`" : implode(', ', array_map(function($v) {
         return "`$v`";
-      }, $col)) : $col) . ' from `' . $this->class::getTableName() . '`';
-      $this->addCondition($sql);
-      if($this->orderBy) {
-        $sql .= " order by `{$this->orderBy[0]}`";
-        if($this->orderBy[1])
-          $sql .= " {$this->orderBy[1]}";
-      }
-      if($this->limit)
-        $sql .= ' limit ' . ($this->limit[1] ? "{$this->limit[0]}, {$this->limit[1]}" : $this->limit[0]);
-      if($this->condition) {
-        $s = $db->prepare($sql);
-        $s->execute($this->params);
-      } else
-        $s = $db->query($sql);
-    } catch(\Throwable $e) {
-      if(static::delay($c++))
-        goto _getdb;
-      else
-        throw $e;
+      }, $this->groupBy)));
     }
+    if($this->orderBy) {
+      $sql .= " order by `{$this->orderBy[0]}`";
+      if($this->orderBy[1])
+        $sql .= " {$this->orderBy[1]}";
+    }
+    if($this->limit)
+      $sql .= ' limit ' . ($this->limit[1] ? "{$this->limit[0]}, {$this->limit[1]}" : $this->limit[0]);
+    if($this->condition) {
+      $s = $db->prepare($sql);
+      $s->execute($this->params);
+    } else
+      $s = $db->query($sql);
     $this->class::putDatabase($db);
     return $s;
   }
@@ -106,13 +93,18 @@ class Statement {
     return $this;
   }
 
+  function groupBy(string|array $by): Statement {
+    $this->groupBy = $by;
+    return $this;
+  }
+
   function orderBy(string $by, ?string $order = null): Statement {
     $this->orderBy = [$by, $order ? strtolower($order) : $order];
     return $this;
   }
 
-  function limit(int $offset, int $rows = null): Statement {
-    $this->limit = [$offset, $rows];
+  function limit(int $offsetOrCount, int $count = null): Statement {
+    $this->limit = [$offsetOrCount, $count];
     return $this;
   }
 
@@ -155,7 +147,7 @@ class Statement {
       yield $v;
   }
 
-  function first(array|string $col = '*'): ?BaseModel {
+  function first(array|string $col = '*') {
     if(($s = $this->statement($col)) && ($r = $s->fetch())) {
       if($intFields = $this->class::$intFields) {
         foreach($intFields as $k)
@@ -168,30 +160,19 @@ class Statement {
   }
 
   function count(): int {
-    $c = 0;
-    _getdb:
-    try {
-      $db = $this->class::getDatabase();
-      $sql = 'select count(*) c from `' . $this->class::getTableName() . '`';
-      $this->addCondition($sql);
-      if($this->condition) {
-        $s = $db->prepare($sql);
-        $s->execute($this->params);
-      } else
-        $s = $db->query($sql);
-    } catch(\Throwable $e) {
-      if(static::delay($c++))
-        goto _getdb;
-      else
-        throw $e;
-    }
+    $db = $this->class::getDatabase();
+    $sql = 'select count(*) c from `' . $this->class::getTableName() . '`';
+    $this->addCondition($sql);
+    if($this->condition) {
+      $s = $db->prepare($sql);
+      $s->execute($this->params);
+    } else
+      $s = $db->query($sql);
     $this->class::putDatabase($db);
     $rows = $s->fetch();
     if(isset($rows->c))
       return $rows->c;
-    else {
-      $c = 0;
-      goto _getdb;
-    }
+    else
+      return -1;
   }
 }
