@@ -9,8 +9,6 @@ use Oblind\Http\Controller;
 use Oblind\Http\Pipeline;
 use Oblind\WebSocket;
 
-use function Oblind\format_backtrace;
-
 const RES_BAD_REQUEST = 400;
 const RES_NO_PERMISSION = 401;
 const RES_FORBIDEN = 403;
@@ -134,14 +132,10 @@ class Router {
       else
         $c->{"{$info->action}Action"}($request, $response, $info);
     } catch(\Throwable $e) {
-      try {
-        $msg = "{$request->server['request_method']} {$request->server['request_uri']}\nEXCEPTION in "
-          . get_class($c) . "->{$info->action}Action()\n" . format_backtrace($e);
-        $c->svr->show($msg);
-        $response->status(RES_BAD_REQUEST);
-        $response->end($request->header['x-requested-with'] ?? 0 == 'XMLHttpRequest' ? $msg : str_replace("\n", "<br>\n", $msg));
-      } catch(\Throwable $e) { //response已关闭
-      }
+      $msg = "EXCEPTION in {$request->server['request_method']} {$request->server['request_uri']}\n" . $e;
+      $c->svr->show($msg);
+      $response->status(RES_BAD_REQUEST);
+      $response->end($request->header['x-requested-with'] ?? 0 == 'XMLHttpRequest' ? $msg : str_replace("\n", "<br>\n", $msg));
     }
   }
 
@@ -161,8 +155,7 @@ class Router {
             } elseif(!$in)
               $p->pipe([$m, 'handle']);
           } catch(\Throwable $e) {
-            $msg = 'EXCEPTION in ' . get_class($m) . "->handle()\n" . format_backtrace($e);
-            $this->svr->show($msg);
+            $this->svr->show("EXCEPTION:\n" . $e);
           }
         }
         $p->then([$this, 'resole']);

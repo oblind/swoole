@@ -20,8 +20,9 @@ const ERROR_STRING = [
 ];
 const E_FATAL = E_ERROR | E_USER_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
 
-function format_backtrace(\Throwable $e): string {
-  $msg = $e->getMessage() . "\nStack trace:";
+/*function format_backtrace(\Throwable $e): string {
+  $msg = $e->getMessage() . "\nin " . $e->getFile() . '(' . $e->getLine() . "):\nStack trace\n";
+  // . $e->getTraceAsString();
   if($ec = \Oblind\ERROR_STRING[$e->getCode()] ?? null)
     $msg = "$ec: $msg";
   //不保留参数
@@ -32,7 +33,7 @@ function format_backtrace(\Throwable $e): string {
     $msg .= "{$l['function']}()";
   }
   return $msg;
-}
+}*/
 
 function base64url_encode($s) {
   $s = base64_encode($s);
