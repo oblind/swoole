@@ -249,9 +249,7 @@ abstract class WebSocket extends SwooleWebSocket {
         $this->pageNotFound($request, $response);
       }
     } catch(\Throwable $e) {
-      $msg = "{$request->server['request_method']} {$request->server['request_uri']}\nEXCEPTION in "
-        . static::class . "->onRequest()\n";
-      $this->show($msg . format_backtrace($e));
+      $this->show("EXCEPTION\n" . $e);
     }
   }
 
