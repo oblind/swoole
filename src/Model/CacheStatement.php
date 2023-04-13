@@ -100,57 +100,66 @@ class CacheStatement extends Statement {
   }
 
   function find($primary, $col = '*') {
+    $c = 0;
     _getcache:
     try {
-      $c = $this->class::getCache();
+      $cache = $this->class::getCache();
       if(is_array($primary)) {
         $r = [];
         foreach($primary as $v) {
-          if($t = $this->match($this->prefix . ':' . $v, $col, $c))
+          if($t = $this->match($this->prefix . ':' . $v, $col, $cache))
             $r[] = $t;
         }
         $r = new Collection($r);
       } else
-        $r = $this->match($this->prefix . ':' . $primary, $col, $c);
+        $r = $this->match($this->prefix . ':' . $primary, $col, $cache);
     } catch(\Throwable $e) {
-      echo "EXCEPTION in CacheStatement->find(), ", $e->getMessage(), "\n";
-      goto _getcache;
+      if($c++ < 10) {
+        usleep(50000);
+        goto _getcache;
+      } else
+        throw $e;
     }
-    $this->class::putCache($c);
+    $this->class::putCache($cache);
     return $r;
   }
 
   function first($col = '*'): ?BaseModel {
+    $c = 0;
     _getcache:
     try {
-      $c = $this->class::getCache();
-      $ks = $c->keys("$this->prefix:*");
+      $cache = $this->class::getCache();
+      $ks = $cache->keys("$this->prefix:*");
       if($ks) {
         foreach($ks as $k)
-          if($r = $this->match($k, $col, $c))
+          if($r = $this->match($k, $col, $cache))
             goto _end;
         if(!$this->pure) {
           if($r = parent::first($col))
-            $this->cache([$r], $c);
+            $this->cache([$r], $cache);
         } else
           $r = null;
       } else
         $r = null;
     } catch(\Throwable $e) {
-      echo "EXCEPTION in CacheStatement->first(), ", $e->getMessage(), "\n";
-      goto _getcache;
+      if($c++ < 10) {
+        usleep(50000);
+        goto _getcache;
+      } else
+        throw $e;
     }
     _end:
-    $this->class::putCache($c);
+    $this->class::putCache($cache);
     return $r;
   }
 
   function get($col = '*'): Collection {
+    $c = 0;
     _getcache:
     try {
-      $c = $this->class::getCache();
+      $cache = $this->class::getCache();
       if($this->pure) {
-        $r = $this->match($c->keys($this->prefix . ':*'), $col, $c);
+        $r = $this->match($cache->keys($this->prefix . ':*'), $col, $cache);
         if($r) {
           $orderBy = $this->orderBy ?: [$this->class::getPrimary(), false];
           $k = $orderBy[0];
@@ -175,13 +184,16 @@ class CacheStatement extends Statement {
         $result = new Collection($r ?? []);
       } else {
         $result = parent::get($col);
-        $this->cache($result->toArray(), $c);
+        $this->cache($result->toArray(), $cache);
       }
-      $this->class::putCache($c);
+      $this->class::putCache($cache);
       return $result;
     } catch(\Throwable $e) {
-      echo "EXCEPTION in CacheStatement->get(), ", $e->getMessage(), "\n";
-      goto _getcache;
+      if($c++ < 10) {
+        usleep(50000);
+        goto _getcache;
+      } else
+        throw $e;
     }
   }
 }

@@ -68,8 +68,8 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
       $r = static::$dbPool->get();
       return $r;
     } catch(\Throwable $e) {
-      echo 'EXCEPTION in ' . static::class . '->first(), ', $e->getMessage(), "\n";
-      if($c++ < 100) {
+      echo "EXCEPTION\n" . $e;
+      if($c++ < 10) {
         usleep(50000);
         goto _getdb;
       } else

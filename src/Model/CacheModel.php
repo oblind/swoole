@@ -34,16 +34,21 @@ abstract class CacheModel extends BaseModel {
   }
 
   static function clear() {
+    $c = 0;
     _getcache:
     try {
-      $c = static::getCache();
-      $c->clear();
-      $c->delete('_loaded');
+      $cache = static::getCache();
+      $cache->clear();
+      $cache->delete('_loaded');
     } catch(\Throwable $e) {
-      echo $e->getMessage(), "\n";
-      goto _getcache;
+      echo "EXCEPTION\n" . $e;
+      if($c++ < 10) {
+        usleep(50000);
+        goto _getcache;
+      } else
+        throw $e;
     }
-    static::putCache($c);
+    static::putCache($cache);
   }
 
   static function pure() {
@@ -51,42 +56,52 @@ abstract class CacheModel extends BaseModel {
   }
 
   static function loaded(): bool {
+    $c = 0;
     _getcache:
     try {
-      $c = static::getCache();
-      $r = static::$loaded || (bool)$c->get('_loaded');
+      $cache = static::getCache();
+      $r = static::$loaded || (bool)$cache->get('_loaded');
     } catch(\Throwable $e) {
-      echo $e->getMessage(), "\n";
-      goto _getcache;
+      echo "EXCEPTION\n" . $e;
+      if($c++ < 10) {
+        usleep(50000);
+        goto _getcache;
+      } else
+        throw $e;
     }
-    static::putCache($c);
+    static::putCache($cache);
     return $r;
   }
 
   static function load(int $id = 0) {
+    $c = 0;
     _getcache:
     try {
-      $c = static::getCache();
+      $cache = static::getCache();
       static::setReturnRaw(true);
       if($id) {
         if($m = parent::find($id)) {
-          $c->set(static::PREFIX . ':' . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
+          $cache->set(static::PREFIX . ':' . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
         }
       } else {
         if(!static::$loaded) {
-          if(!$c->get('_loaded'))
-            $c->set('_loaded', 1);
+          if(!$cache->get('_loaded'))
+            $cache->set('_loaded', 1);
           static::$loaded = true;
         }
         foreach(parent::get()->toArray() as $m)
-          $c->set(static::PREFIX . ':' . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
+          $cache->set(static::PREFIX . ':' . $m->{static::$primary}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
       }
       static::setReturnRaw(false);
     } catch(\Throwable $e) {
-      echo $e->getMessage(), "\n";
-      goto _getcache;
+      echo "EXCEPTION\n" . $e;
+      if($c++ < 10) {
+        usleep(50000);
+        goto _getcache;
+      } else
+        throw $e;
     }
-    static::putCache($c);
+    static::putCache($cache);
   }
 
   function getData() {
