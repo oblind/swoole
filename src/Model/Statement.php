@@ -3,8 +3,6 @@ namespace Oblind\Model;
 
 use Swoole\Database\PDOStatementProxy;
 
-use function Oblind\format_backtrace;
-
 class Statement {
   protected string $class;
   protected $condition;

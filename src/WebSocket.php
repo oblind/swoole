@@ -32,7 +32,6 @@ class PublishMessage {
 };
 
 abstract class WebSocket extends SwooleWebSocket {
-  const MAX_TABLE_SIZE = 1024;
   //路由
   public Router $router;
   protected ?array $header = null;
@@ -257,7 +256,7 @@ abstract class WebSocket extends SwooleWebSocket {
 
   abstract function getCache(): BaseCache;
 
-  function push($fd, $data, $opcode = \WEBSOCKET_OPCODE_TEXT, $flags = \SWOOLE_WEBSOCKET_FLAG_FIN): bool {
+  function push(int $fd, $data, int $opcode = SWOOLE_WEBSOCKET_OPCODE_TEXT, int $flags = SWOOLE_WEBSOCKET_FLAG_FIN): bool {
     if($this->isEstablished($fd)) {
       if(is_array($data) || is_object($data))
         $data = json_encode($data, JSON_UNESCAPED_UNICODE);

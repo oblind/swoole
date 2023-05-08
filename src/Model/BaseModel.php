@@ -7,8 +7,6 @@ use Swoole\Database\PDOProxy;
 use Swoole\Database\PDOStatementProxy;
 use Oblind\Application;
 
-use function Oblind\format_backtrace;
-
 class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggregate {
   protected static PDOPool $dbPool;
   protected static array $tableNames = [];

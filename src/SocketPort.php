@@ -23,7 +23,7 @@ class SocketPort {
       try {
         $this->onReceive($svr, $fd, $rid, $data);
       } catch(\Throwable $e) {
-        $svr->show('EXCEPTION in ' . static::class . "->onReceive()\n" . format_backtrace($e));
+        $svr->show("EXCEPTION\n" . $e);
       }
     });
 

@@ -30,6 +30,9 @@ class Application {
     if(file_exists($configFile)) {
       static::$config = json_decode(file_get_contents($configFile), true);
       $default = [
+        'server' => [
+          'maxTableSize' => 1024,
+        ],
         'db' => [
           'type' => 'mysql',
           'host' => '127.0.0.1',

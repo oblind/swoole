@@ -32,6 +32,12 @@ const E_FATAL = E_ERROR | E_USER_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_RECO
       $msg .= "{$l['class']}{$l['type']}";
     $msg .= "{$l['function']}()";
   }
+
+  foreach(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS) as $i => $bt) {
+    $msg .= (isset($bt['file']) ? "#$i {$bt['file']}({$bt['line']}) {$bt['class']}{$bt['type']}{$bt['function']}\n"
+      : "#$i {$bt['class']}{$bt['type']}{$bt['function']}\n");
+  }
+
   return $msg;
 }*/
 
