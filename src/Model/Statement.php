@@ -5,8 +5,8 @@ use Swoole\Database\PDOStatementProxy;
 
 class Statement {
   protected string $class;
-  protected $condition;
-  protected ?array $params = null;
+  protected array $condition = [];
+  protected array $params = [];
   protected string|array|null $groupBy = null;
   protected ?array $orderBy = null;
   protected ?array $limit = null;
@@ -36,25 +36,28 @@ class Statement {
   protected function addCondition(string &$sql) {
     if($this->condition) {
       $sql .= ' where ';
-      if(is_array($this->condition)) {
-        $this->params = [];
-        $cs = [];
-        foreach($this->condition as $k => $v) {
-          if($v === null)
-            $cs[] = "`$k` is null";
-          else {
-            $cs[] = "`$k` = ?";
-            $this->params[] = $v;
+      $sqls = [];
+      foreach($this->condition as $cdt) {
+        if(is_array($cdt)) {
+          $cs = [];
+          foreach($cdt as $k => $v) {
+            if($v === null)
+              $cs[] = "`$k` is null";
+            else {
+              $cs[] = "`$k` = ?";
+              $this->params[] = $v;
+            }
           }
-        }
-        $sql .= implode(' and ', $cs);
-        /*$this->params = array_values($this->condition);
-        $sql .= implode(' and ', array_map(function($k) {
-          return "`$k`=?";
-        }, array_keys($this->condition)));
-        */
-      } else
-        $sql .= $this->condition;
+          $sqls[] = '(' . implode(' and ', $cs) . ')';
+          /*$this->params = array_values($this->condition);
+          $sql .= implode(' and ', array_map(function($k) {
+            return "`$k`=?";
+          }, array_keys($this->condition)));
+          */
+        } else
+          $sqls[] = $cdt;
+      }
+      $sql .= implode(' or ', $sqls);
     }
   }
 
@@ -86,8 +89,16 @@ class Statement {
   }
 
   function where($condition, ?array $params = null): Statement {
-    $this->condition = $condition;
-    $this->params = $params;
+    $this->condition = [$condition];
+    if($params)
+      array_splice($this->params, count($this->params), 0, $params);
+    return $this;
+  }
+
+  function orWhere($condition, array $params = null): Statement {
+    $this->condition[] = $condition;
+    if($params)
+      array_splice($this->params, count($this->params), 0, $params);
     return $this;
   }
 

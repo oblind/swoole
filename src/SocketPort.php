@@ -15,11 +15,11 @@ class SocketPort {
     $socket = $svr->addListener($host, $port, $type);
     $socket->set(['open_http_protocol' => false]);
 
-    $socket->on('connect', function($svr, $fd) {
-      $this->onConnect($svr, $fd);
+    $socket->on('connect', function(WebSocket $svr, int $fd, int $rid) {
+      $this->onConnect($svr, $fd, $rid);
     });
 
-    $socket->on('receive', function($svr, $fd, $rid, $data) {
+    $socket->on('receive', function(WebSocket $svr, int $fd, int $rid, string $data) {
       try {
         $this->onReceive($svr, $fd, $rid, $data);
       } catch(\Throwable $e) {
@@ -27,7 +27,7 @@ class SocketPort {
       }
     });
 
-    $socket->on('close', function($svr, $fd) {
+    $socket->on('close', function(WebSocket $svr, int $fd) {
       $this->onClose($svr, $fd);
     });
 
@@ -38,7 +38,7 @@ class SocketPort {
     return $this->svr;
   }
 
-  function onConnect(WebSocket $svr, int $fd) {
+  function onConnect(WebSocket $svr, int $fd, int $rid) {
   }
 
   function onReceive(WebSocket $svr, int $fd, int $rid, string $data) {

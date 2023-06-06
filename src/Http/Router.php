@@ -127,6 +127,16 @@ class Router {
   function resole(Request $request, Response $response, RequestInfo $info) {
     $c = $info->controller;
     try {
+      /*echo "===============\n";
+      echo "{$request->server['request_method']} {$request->server['request_uri']}"
+        , isset($request->server['query_string']) ? "?{$request->server['query_string']}\n" : "\n";
+      echo $c::class . "->{$info->action}Action\n";
+      if($request->files) {
+        foreach($request->files as $f)
+          echo "  {$f['name']}\n";
+      }
+      echo "\n";
+      */
       if($info->args)
         $c->{"{$info->action}Action"}($request, $response, $info, ...($info->args));
       else

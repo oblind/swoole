@@ -12,47 +12,30 @@ use Swoole\Http\Response;
 use Oblind\Cache\BaseCache;
 use Oblind\Model\BaseModel;
 use Oblind\Http\Router;
-
-class PublishMessage {
-  public string $dest;
-  public int $id;
-  public string $cmd;
-  public $data;
-  public ?array $params;
-
-  function __construct(string $dest, int $id, string $cmd, $data = null, array $params = null) {
-    $this->dest = $dest;
-    $this->id = $id;
-    $this->cmd = $cmd;
-    if($data !== null)
-      $this->data = $data;
-    if($params !== null)
-      $this->params = $params;
-  }
-};
+use stdClass;
 
 abstract class WebSocket extends SwooleWebSocket {
-  //路由
+  /** 路由*/
   public Router $router;
   protected ?array $header = null;
-  //日志路径
+  /** 日志路径*/
   public string $logFile = './log/log.txt';
-  //日志文件大小, 超出后会被压缩存档
+  /** 日志文件大小, 超出后会被压缩存档*/
   public int $logFileSize = 0x20000;  //128k
   protected bool $savingLog = false;
-  //跨进程设备列表, id => prod
+  /** 跨进程设备列表, id => prod*/
   public Table $tblProds;
-  //跨进程用户列表, id => user
+  /** 跨进程用户列表, id => user*/
   public Table $tblUsers;
-  //product fd => id
+  /** product fd => id*/
   public Table $tblProdIds;
-  //user fd => id
+  /** user fd => id*/
   public Table $tblUserIds;
-  //worker本地设备列表
+  /** worker本地设备列表, fd => $prod*/
   public array $prods = [];
-  //worker本地用户列表
+  /** worker本地用户列表, fd => $u*/
   public array $users = [];
-  //日志
+  /** 日志*/
   public Logger $logger;
 
   function __construct(string $host, int $port = 0, int $mode = \SWOOLE_PROCESS, int $sock_type = \SWOOLE_SOCK_TCP) {
@@ -174,8 +157,9 @@ abstract class WebSocket extends SwooleWebSocket {
     });
 
     $this->on('pipeMessage', function(SwooleServer $svr, int $src_wid, $msg) {
-      if(($d = json_decode($msg)) && isset($d->dest))
-        $this->onPublish($d->dest, $d->id, $d->cmd, $d->data ?? null, $d->params ?? null);
+      if(($m = json_decode($msg)) && isset($m->dest, $m->id, $m->data)) {
+        $this->onPublish($m->dest, $m->id, $m->data->cmd, $m->data);
+      }
       $this->onPipeMessage($src_wid, $msg);
     });
   }
@@ -268,25 +252,53 @@ abstract class WebSocket extends SwooleWebSocket {
   }
 
   static function toObj(&$a) {
-    $a = (object)$a;
-    foreach($a as $k => $v)
-      if(is_array($v) && $v && !array_key_exists(0, $v))
-        $a->$k = static::toObj($v);
+    if(is_array($a)) {
+      if($a && !array_key_exists(0, $a))
+        $a = (object)$a;
+      foreach($a as $k => &$v)
+        static::toObj($v);
+    }
     return $a;
   }
 
-  function publish(string $dest, int $id, string $cmd, $data = null, array $params = null) {
-    //if(is_array($data))
-    //  $data = static::toObj($data);
-    $d = new PublishMessage($dest, $id, $cmd, $data, $params);
-    $m = json_encode($d, JSON_UNESCAPED_UNICODE);
+  /**
+   * 向websocket连接广播消息
+   *
+   * @param string $dest 目标类别
+   * @param integer $id 目标id
+   * @param string $cmd 命令
+   * @param mixed $data 广播数据
+   * @param array|null $params 附加数据
+   * @return void
+   */
+  function publish(string $dest, int $id, string $cmd, mixed $data = null, object|array $params = null) {
+    /*透明传输
+    [
+      'dest' => $dest,
+      'id' => $id,
+      'data' => [ //外层包装
+        'cmd' => $cmd,
+        ...$params,
+        'data' => $data,
+      ]
+    ]
+    */
+    static::toObj($data);
+    $d = (object)['cmd' => $cmd];
+    if($data !== null)
+      $d->data = $data;
+    if($params) {
+      foreach($params as $k => $v)
+        $d->$k = $v;
+    }
+    $m = json_encode(['dest' => $dest, 'id' => $id, 'data' => $d], JSON_UNESCAPED_UNICODE);
     for($i = 0, $c = $this->setting['worker_num']; $i < $c; $i++)
       if($i != $this->worker_id)
         $this->sendMessage($m, $i);
-    $this->onPublish($dest, $id, $cmd, $data, $params);
+    $this->onPublish($dest, $id, $cmd, $d);
   }
 
-  function onPublish(string $dest, int $id, string $cmd, $data = null, $params = null) {
+  function onPublish(string $dest, int $id, string $cmd, object $data) {
   }
 
   protected function addLog($l) {

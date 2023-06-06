@@ -48,42 +48,47 @@ class CacheStatement extends Statement {
 
   protected function match($key, $col, BaseCache $cache) {
     if($this->condition) {
-      $i = 0;
-      $cs = [];
-      $ks = [];
-      foreach($this->condition as $k => $v) {
-        if(is_string($k)) {
-          $ks[] = $k;
-          if(is_array($v)) {
-            for($j = 0, $c = count($v); $j < $c; $j += 2) {
-              if(is_string($v[$j]))
-                $v[$j] = '\'' . addslashes($v[$j]) . '\'';
-              elseif($v[$j] === null)
-                $v[$j] = 'null';
-              $op = $v[$j + 1] ?? '==';
-              $cs[] = "(\$m->$k $op {$v[$j]})";
+      $cdts = [];
+      foreach($this->condition as $cdt) {
+        $i = 0;
+        $cs = [];
+        $ks = [];
+        foreach($cdt as $k => $v) {
+          if(is_string($k)) {
+            $ks[] = $k;
+            if(is_array($v)) {
+              for($j = 0, $c = count($v); $j < $c; $j += 2) {
+                if(is_string($v[$j]))
+                  $v[$j] = '\'' . addslashes($v[$j]) . '\'';
+                elseif($v[$j] === null)
+                  $v[$j] = 'null';
+                $op = $v[$j + 1] ?? '==';
+                $cs[] = "(\$m->$k $op {$v[$j]})";
+              }
+            } else {
+              if(is_string($v))
+                $v = '\'' . addslashes($v) . '\'';
+              elseif($v === null)
+                $v = 'null';
+              $op = $cdt[$i++] ?? '==';
+              if($op == '=')
+                $op = '==';
+              $cs[] = "property_exists(\$m, '$k') && (\$m->$k $op $v)";
             }
-          } else {
-            if(is_string($v))
-              $v = '\'' . addslashes($v) . '\'';
-            elseif($v === null)
-              $v = 'null';
-            $op = $this->condition[$i++] ?? '==';
-            if($op == '=')
-              $op = '==';
-            $cs[] = "(\$m->$k $op $v)";
+            /*if($m->$k != $v) {
+              $f = false;
+              break;
+            }*/
           }
-          /*if($m->$k != $v) {
-            $f = false;
-            break;
-          }*/
         }
+        $cdts[] = '(' . implode(' && ', $cs) . ')';
       }
-      if($ks)
+      /*if($ks)
         array_unshift($cs, 'isset(' . implode(', ', array_map(function($k) {
           return "\$m->$k";
         }, $ks)) . ')');
-      $c = 'return ' . implode(' && ', $cs) . ';';
+      */
+      $c = 'return ' . implode(' || ', $cdts) . ';';
     } else
       $c = null;
     if(is_array($key)) {
@@ -163,7 +168,7 @@ class CacheStatement extends Statement {
         if($r) {
           $orderBy = $this->orderBy ?: [$this->class::getPrimary(), false];
           $k = $orderBy[0];
-          if(is_string($r[0]->$k))
+          if(is_string($r[0]->$k)) {
             if($orderBy[1] == 'desc')
               usort($r, function($a, $b) use($k) {
                 return strcmp($b->$k, $a->$k);
@@ -172,11 +177,11 @@ class CacheStatement extends Statement {
               usort($r, function($a, $b) use($k) {
                 return strcmp($a->$k, $b->$k);
               });
-          elseif($orderBy[1] == 'desc')
+          } elseif($orderBy[1] == 'desc') {
             usort($r, function($a, $b) use($k) {
               return $b->$k <=> $a->$k;
             });
-          else
+          } else
             usort($r, function($a, $b) use($k) {
               return $a->$k <=> $b->$k;
             });
