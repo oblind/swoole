@@ -132,6 +132,10 @@ abstract class WebSocket extends SwooleWebSocket {
         $this->onWorkerStop($wid);
     });
 
+    $this->on('workerError', function(SwooleServer $svr, int $wid, int $pid, int $exitCode, int $signal) {
+      $this->onWorkerError($wid, $pid, $exitCode, $signal);
+    });
+
     $this->on('open', function(SwooleWebSocket $svr, \Swoole\Http\Request $request) {
       $this->onOpen($request);
     });
@@ -182,13 +186,16 @@ abstract class WebSocket extends SwooleWebSocket {
   function onWorkerStop(int $wid) {
   }
 
+  function onWorkerError(int $wid, int $pid, int $exitCode, int $signal) {
+  }
+
   function onTaskWorkerStart(int $tid) {
   }
 
   function onTastWorkerStop(int $tid) {
   }
 
-  function onTask(\stdClass $cmd, Task $task) {
+  function onTask(stdClass $cmd, Task $task) {
   }
 
   function onFinish(int $tid, string $data) {
