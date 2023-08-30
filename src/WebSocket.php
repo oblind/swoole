@@ -148,7 +148,8 @@ abstract class WebSocket extends SwooleWebSocket {
     });
 
     $this->on('task', function(SwooleServer $svr, Task $task) {
-      if($d = json_decode($task->data)) {
+      if($d = is_string($task->data) ? json_decode($task->data)
+      : (is_array($task->data) ? (object)$task->data : $task->data)) {
         switch($d->cmd ?? null) {
           case 'log':
             $this->addLog($d->log);
@@ -318,7 +319,7 @@ abstract class WebSocket extends SwooleWebSocket {
       if($force)
         $this->writeLogs(true);
     } else
-      $this->task(json_encode(['cmd' => 'log', 'log' => $l]), 0);
+      $this->task(['cmd' => 'log', 'log' => $l], 0);
   }
 
   function show(string $l, bool $force = false) {
@@ -330,7 +331,7 @@ abstract class WebSocket extends SwooleWebSocket {
     if($this->taskworker || $force) {
       $this->logger->writeLogs();
     } else
-      $this->task(json_encode(['cmd' => 'writeLogs']), 0);
+      $this->task(['cmd' => 'writeLogs'], 0);
   }
 
   function restart() {
