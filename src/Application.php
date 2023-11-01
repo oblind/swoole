@@ -107,6 +107,12 @@ class Application {
       static::$app = $this;
       static::$config['daemonize'] = in_array(static::$daemonizeFlag, $_SERVER['argv']);
       echo 'daemonize: ', static::$config['daemonize'] ? 'yes' : 'no', "\n";
+
+      //将普通错误转为异常
+      set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline) {
+        throw new \Exception("$errstr in $errfile($errline)", $errno);
+      });
+
       \Swoole\Runtime::enableCoroutine();
 
       $this->onStart();

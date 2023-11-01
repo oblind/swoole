@@ -24,6 +24,6 @@
     "oblind/language": "dev-master"
   },
   "require-dev": {
-      "swoft/swoole-ide-helper": "^2.1.3"
+    "swoole/ide-helper": "^5.1"
   }
 }

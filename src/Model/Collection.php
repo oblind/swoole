@@ -40,8 +40,8 @@ class Collection extends Decachable implements ArrayAccess, Countable, IteratorA
     return isset($this->_data[$offset]);
   }
 
-  function offsetGet($offset) {
-    return $this->_data[$offset];
+  function offsetGet($offset): mixed {
+    return is_array($this->_data) ? $this->_data[$offset] : $this->_data->$offset;
   }
 
   function offsetSet($offset, $value): void {
@@ -64,7 +64,7 @@ class Collection extends Decachable implements ArrayAccess, Countable, IteratorA
     return new ArrayIterator($this->_data);
   }
 
-  function jsonSerialize() {
+  function jsonSerialize(): mixed {
     $r = [];
     if($this->_data)
       foreach($this->_data as $v)

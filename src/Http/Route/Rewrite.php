@@ -1,6 +1,7 @@
 <?php
 namespace Oblind\Http\Route;
 
+use Oblind\Http\RequestInfo;
 use Swoole\Http\Request;
 use Oblind\Http\Router;
 
@@ -13,7 +14,7 @@ class Rewrite extends BaseRoute {
     parent::__construct($route['controller'], $route['action']);
   }
 
-  function route(Request $request): bool {
-    return true;
+  function route(Request $request): ?RequestInfo {
+    return new RequestInfo;
   }
 }

@@ -93,19 +93,24 @@ abstract class WebSocket extends SwooleWebSocket {
 
     $this->on('workerStart', function(SwooleServer $svr, int $wid) {
       //将普通错误转为异常
-      set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline) {
+      /*set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline) {
         throw new \Exception("$errstr in $errfile($errline)", $errno);
       });
+      */
       //记录致命错误
       register_shutdown_function(function() {
+        echo "  crash\n";
+
+        $msg = 'CRITICAL ERROR!';
         $e = error_get_last();
         //if($e && ($e['type'] & E_FATAL)) {
         if($e) {
           $this->onCrash();
-          $msg = 'CRITICAL ERROR! ' . ERROR_STRING[$e['type']] . ": {$e['message']} in {$e['file']}({$e['line']})";
-          $this->show($msg, true);
+          $msg .= ' ' . ERROR_STRING[$e['type']] . ": {$e['message']} in {$e['file']}({$e['line']})";
         }
+        $this->show($msg, true);
       });
+
       //初始化独立缓存池
       BaseCache::initCachePool();
       BaseModel::initDatabasePool();

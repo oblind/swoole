@@ -244,7 +244,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   }
 
   //implement JsonSerializable
-  function jsonSerialize() {
+  function jsonSerialize(): mixed {
     if(static::$hiddenFields && !static::$returnRawCount) {
       $r = (object)array_diff_key(get_object_vars($this->_data), array_flip(static::$hiddenFields));
       static::hideFields($r, get_called_class());
