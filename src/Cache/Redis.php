@@ -36,8 +36,16 @@ class Redis extends BaseCache {
     return $this->redis->$name(...$arguments);
   }
 
-  function keys($pattern) {
+  function keys(string $pattern = '*') {
     return $this->redis->keys($pattern);
+  }
+
+  function setIfExists($key, $value, $ttl = null): bool {
+    return $this->redis->set($key, $value, $ttl ? ['xx', 'ex' => $ttl] : null);
+  }
+
+  function setIfNotExists($key, $value, $ttl = null): bool {
+    return $this->redis->set($key, $value, $ttl ? ['nx', 'ex' => $ttl] : null);
   }
 
   function get($key, $default = null) {

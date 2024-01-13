@@ -10,5 +10,9 @@ abstract class BaseCache implements CacheInterface {
     return new static($persistent);
   }
 
-  abstract function keys($pattern);
+  abstract function keys(string $pattern = '*');
+
+  abstract function setIfExists($key, $value, $ttl = null): bool;
+
+  abstract function setIfNotExists($key, $value, $ttl = null): bool;
 }
