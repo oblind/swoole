@@ -151,7 +151,7 @@ class Router {
 
   function dispatch(Request $request, Response $response): bool {
     if($info = $this->route($request)) {
-      if((($method = $request->server['request_method']) == 'POST' || $method == 'PUT') && strpos($request->header['content-type'] ?? 0, 'application/json') !== false)
+      if((($method = $request->server['request_method']) == 'POST' || $method == 'PUT') && ($request->header['content-type'] ?? 0) == 'application/json')
         $request->post = json_decode($request->rawContent(), true);
       if($this->curRoute->middlewares) {
         $p = new Pipeline;

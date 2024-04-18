@@ -152,8 +152,23 @@ class Statement {
 
   function entries($col = '*') {
     $s = $this->statement($col);
-    foreach($s as $v)
-      yield $v;
+    if($s && $s->rowCount()) {
+      $intFields = $this->class::$intFields;
+      $floatFields = $this->class::$floatFields;
+      while($d = $s->fetch()) {
+        if($intFields) {
+          foreach($intFields as $k)
+            if(isset($d->$k))
+              $d->$k = intval($d->$k);
+        }
+        if($floatFields) {
+          foreach($floatFields as $k)
+            if(isset($d->$k))
+              $d->$k = floatval($d->$k);
+        }
+        yield new $this->class($d);
+      }
+    }
   }
 
   function first(array|string $col = '*') {

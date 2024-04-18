@@ -34,15 +34,20 @@ class CacheStatement extends Statement {
       $cache->set($this->prefix . ':' . $m->{$pr}, json_encode($m->getData(), JSON_UNESCAPED_UNICODE));
   }
 
+  /**
+   * delete unused fields
+   */
   protected function prune(\stdClass $m, $col) {
     if(is_array($col)) {
       foreach(array_keys(get_object_vars($m)) as $p)
         if(!in_array($p, $col))
           unset($m->$p);
-    } elseif($col != '*')
-      foreach(array_keys(get_object_vars($m)) as $p)
-        if($p != $col)
-          unset($m->$p);
+    } elseif($col != '*') {
+      if($ks = array_diff(array_keys(get_object_vars($m)), [$col])) {
+        foreach($ks as $k)
+          unset($m->$k);
+      }
+    }
     return new $this->class($m);
   }
 
