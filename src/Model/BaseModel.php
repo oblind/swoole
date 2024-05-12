@@ -147,6 +147,13 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
     return (new Statement(get_called_class()))->limit($offset, $rows);
   }
 
+  static function query(string $sql): Statement {
+    $db = static::getDatabase();
+    $stmt = $db->query($sql);
+    static::putDatabase($db);
+    return new Statement(get_called_class(), $stmt);
+  }
+
   static function find($primary, $col = '*') {
     return (new Statement(get_called_class()))->find($primary, $col);
   }
@@ -181,13 +188,6 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   static function exec(string $sql): int {
     $db = static::getDatabase();
     $r = $db->exec($sql);
-    static::putDatabase($db);
-    return $r;
-  }
-
-  static function query(string $sql): PDOStatementProxy {
-    $db = static::getDatabase();
-    $r = $db->query($sql);
     static::putDatabase($db);
     return $r;
   }

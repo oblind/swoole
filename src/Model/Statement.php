@@ -5,14 +5,16 @@ use Swoole\Database\PDOStatementProxy;
 
 class Statement {
   protected string $class;
+  protected ?PDOStatementProxy $stmt;
   protected array $condition = [];
   protected array $params = [];
   protected string|array|null $groupBy = null;
   protected ?array $orderBy = null;
   protected ?array $limit = null;
 
-  function __construct(string $class) {
+  function __construct(string $class, PDOStatementProxy $stmt = null) {
     $this->class = $class;
+    $this->stmt = $stmt;
   }
 
   /*static function error(\Throwable $e): bool {
@@ -73,7 +75,7 @@ class Statement {
       }, $this->groupBy)));
     }
     if($this->orderBy) {
-      $sql .= " order by `{$this->orderBy[0]}`";
+      $sql .= " order by {$this->orderBy[0]}";
       if($this->orderBy[1])
         $sql .= " {$this->orderBy[1]}";
     }
@@ -131,7 +133,7 @@ class Statement {
 
   function get(array|string $col = '*'): Collection {
     $r = [];
-    $s = $this->statement($col);
+    $s = $this->stmt ?? $this->statement($col);
     if($s && $s->rowCount()) {
       $intFields = $this->class::$intFields;
       $floatFields = $this->class::$floatFields;
@@ -151,7 +153,7 @@ class Statement {
   }
 
   function entries($col = '*') {
-    $s = $this->statement($col);
+    $s = $this->stmt ?? $this->statement($col);
     if($s && $s->rowCount()) {
       $intFields = $this->class::$intFields;
       $floatFields = $this->class::$floatFields;
@@ -172,7 +174,7 @@ class Statement {
   }
 
   function first(array|string $col = '*') {
-    if(($s = $this->statement($col)) && ($r = $s->fetch())) {
+    if(($s = $this->stmt ?? $this->statement($col)) && ($r = $s->fetch())) {
       if($intFields = $this->class::$intFields) {
         foreach($intFields as $k)
           if(isset($r->$k))
