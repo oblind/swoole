@@ -21,6 +21,9 @@ class Redis extends BaseCache {
           $this->redis->pconnect($cfg['host'], $cfg['port'], $cfg['timeout']);
         else
           $this->redis->connect($cfg['host'], $cfg['port'], $cfg['timeout']);
+        if($password = $cfg['password'] ?? null) {
+          $this->redis->auth($password);
+        }
         $this->redis->select($cfg['index']);
         break;
       } catch(\Throwable $e) {

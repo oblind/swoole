@@ -57,6 +57,10 @@ abstract class WebSocket extends SwooleWebSocket {
       $setting['worker_num'] = $workerNum;
       echo "worker_num: $workerNum\n";
     }
+    if($taskWorkerNum = $config['server']['taskWorkerNum'] ?? 0) {
+      $setting['task_worker_num'] = $taskWorkerNum;
+      echo "task_worker_num: $workerNum\n";
+    }
     if($config['ssl']['enabled'] ?? 0) {
       $sock_type |= \SWOOLE_SSL;
       $setting['ssl_cert_file'] = $config['ssl']['certFile'] ?? '/etc/ssl/certs/ssl-cert-snakeoil.pem';
@@ -319,7 +323,7 @@ abstract class WebSocket extends SwooleWebSocket {
   }
 
   function log(string $l, bool $force = false) {
-    if($this->taskworker && $this->worker_id == $this->setting['worker_num'] || $force) {
+    if($this->taskworker || $force) {
       $this->addLog($l);
       if($force)
         $this->writeLogs(true);
