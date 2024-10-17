@@ -86,12 +86,14 @@ abstract class WebSocket extends SwooleWebSocket {
       });
 
     $this->on('start', function(SwooleServer $svr) {
-      cli_set_process_title(Application::app()::$prefix . '_master');
+      if(PHP_OS == 'Linux')
+        cli_set_process_title(Application::app()::$prefix . '_master');
       $this->onStart();
     });
 
     $this->on('managerStart', function(SwooleServer $svr) {
-      cli_set_process_title(Application::app()::$prefix . '_manager');
+      if(PHP_OS == 'Linux')
+        cli_set_process_title(Application::app()::$prefix . '_manager');
       $this->onManagerStart();
     });
 
@@ -122,13 +124,15 @@ abstract class WebSocket extends SwooleWebSocket {
       BaseCache::putCache($this->getCache());
       BaseModel::putDatabase(BaseModel::getDatabase());
       if($this->taskworker) {
-        cli_set_process_title(Application::app()::$prefix . "_task$wid");
+        if(PHP_OS == 'Linux')
+          cli_set_process_title(Application::app()::$prefix . "_task$wid");
         Timer::tick(2000, function() {
           $this->logger->writeLogs();
         });
         $this->onTaskWorkerStart($wid);
       } else {
-        cli_set_process_title(Application::app()::$prefix . "_worker$wid");
+        if(PHP_OS == 'Linux')
+          cli_set_process_title(Application::app()::$prefix . "_worker$wid");
         $this->onWorkerStart($wid);
       }
     });
