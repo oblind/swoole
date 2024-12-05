@@ -64,28 +64,40 @@ class Statement {
   }
 
   protected function statement($col): ?PDOStatementProxy {
-    $db = $this->class::getDatabase();
-    $sql = 'select ' . (is_array($col) ? implode(', ', array_map(function($v) {
-      return "`$v`";
-    }, $col)) : $col) . ' from `' . $this->class::getTableName() . '`';
-    $this->addCondition($sql);
-    if($this->groupBy) {
-      $sql .= " group by " . (is_string($this->groupBy) ? "`$this->groupBy`" : implode(', ', array_map(function($v) {
+    $c = 0;
+    _getdb:
+    try {
+      $db = $this->class::getDatabase();
+      $sql = 'select ' . (is_array($col) ? implode(', ', array_map(function($v) {
         return "`$v`";
-      }, $this->groupBy)));
+      }, $col)) : $col) . ' from `' . $this->class::getTableName() . '`';
+      $this->addCondition($sql);
+      if($this->groupBy) {
+        $sql .= " group by " . (is_string($this->groupBy) ? "`$this->groupBy`" : implode(', ', array_map(function($v) {
+          return "`$v`";
+        }, $this->groupBy)));
+      }
+      if($this->orderBy) {
+        $sql .= " order by {$this->orderBy[0]}";
+        if($this->orderBy[1])
+          $sql .= " {$this->orderBy[1]}";
+      }
+      if($this->limit)
+        $sql .= ' limit ' . ($this->limit[1] ? "{$this->limit[0]}, {$this->limit[1]}" : $this->limit[0]);
+      if($this->condition) {
+        $s = $db->prepare($sql);
+        $s->execute($this->params);
+      } else
+        $s = $db->query($sql);
+
+    } catch(\Throwable $e) {
+      echo "EXCEPTION\n" . $e;
+      if($c++ < 10) {
+        usleep(50000);
+        goto _getdb;
+      } else
+        throw $e;
     }
-    if($this->orderBy) {
-      $sql .= " order by {$this->orderBy[0]}";
-      if($this->orderBy[1])
-        $sql .= " {$this->orderBy[1]}";
-    }
-    if($this->limit)
-      $sql .= ' limit ' . ($this->limit[1] ? "{$this->limit[0]}, {$this->limit[1]}" : $this->limit[0]);
-    if($this->condition) {
-      $s = $db->prepare($sql);
-      $s->execute($this->params);
-    } else
-      $s = $db->query($sql);
     $this->class::putDatabase($db);
     return $s;
   }
