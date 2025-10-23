@@ -12,7 +12,7 @@ trait CacheTrait {
     static::$pool = new \SplQueue;
   }
 
-  static function getCache(): BaseCache {
+  static function getCache(): static {
     if(static::$pool->count())
       return static::$pool->pop();
     return static::createCache();

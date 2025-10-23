@@ -14,7 +14,7 @@ class Table extends BaseModel {
   }
 
   /**
-   * return a new BaseTable with table named $name
+   * return a new BaseModel with table named $name
    */
   static function open(string $tableName) {
     return new static($tableName);

@@ -318,6 +318,7 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
           $k[] = "`$col`=?";
         $sql = 'update ' . static::getTableName() . ' set ' . implode(', ', $k) . ' where `' . static::$primary . '`=' . $this->{static::$primary};
         $s = $db->prepare($sql);
+        //echo "$sql\n";
         if(!$s->execute($v))
           return -1;
       }

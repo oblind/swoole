@@ -22,15 +22,18 @@ abstract class CacheModel extends BaseModel {
   }
 
   static function find($primary, $col = '*') {
-    return (new CacheStatement(get_called_class()))->find($primary, $col);
+    return (new CacheStatement(get_called_class()))->find($primary, $col)
+    ?? parent::find($primary, $col);
   }
 
   static function get($col = '*'): Collection {
-    return (new CacheStatement(get_called_class()))->get($col);
+    return (new CacheStatement(get_called_class()))->get($col)
+    ?? parent::get($col);
   }
 
   static function first($col = '*'): ?BaseModel {
-    return (new CacheStatement(get_called_class()))->first($col);
+    return (new CacheStatement(get_called_class()))->first($col)
+    ?? parent::first($col);
   }
 
   static function clear() {

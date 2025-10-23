@@ -99,10 +99,9 @@ abstract class WebSocket extends SwooleWebSocket {
 
     $this->on('workerStart', function(SwooleServer $svr, int $wid) {
       //将普通错误转为异常
-      /*set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline) {
+      set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline) {
         throw new \Exception("$errstr in $errfile($errline)", $errno);
       });
-      */
       //记录致命错误
       register_shutdown_function(function() {
         echo "  crash\n";
@@ -122,7 +121,8 @@ abstract class WebSocket extends SwooleWebSocket {
       BaseModel::initDatabasePool();
       //预置连接
       BaseCache::putCache($this->getCache());
-      BaseModel::putDatabase(BaseModel::getDatabase());
+      for($i = 0; $i < 2; $i++)
+        BaseModel::putDatabase(BaseModel::getDatabase());
       if($this->taskworker) {
         if(PHP_OS == 'Linux')
           cli_set_process_title(Application::app()::$prefix . "_task$wid");

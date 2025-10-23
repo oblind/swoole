@@ -39,8 +39,10 @@ class Logger {
       $this->savingLog = false;
     }
     if($this->logs) {
+      $f = fopen($this->logFile, 'a');
       foreach($this->logs as $l)
-        error_log($l, 3, $this->logFile);
+        fwrite($f, $l);
+      fclose($f);
       $this->logs = [];
     }
   }
