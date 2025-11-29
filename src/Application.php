@@ -8,7 +8,7 @@ class Application {
   const RESTART = 1;
   const STOP = 2;
   /**@var Application */
-  protected static self $app;
+  protected static ?self $app = null;
   /**@var string */
   public static string $configFile = 'config.json';
   /**@var string */
@@ -20,7 +20,7 @@ class Application {
   /**@var string */
   public static string $daemonizeFlag = '-d';
 
-  static function app(): Application {
+  static function app(): ?Application {
     return static::$app;
   }
 
