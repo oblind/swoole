@@ -118,7 +118,7 @@ abstract class WebSocket extends SwooleWebSocket {
 
       //初始化独立缓存池
       BaseCache::initCachePool();
-      BaseModel::initDatabasePool();
+      BaseModel::initDatabasePool(false);
       //预置连接
       BaseCache::putCache($this->getCache());
       for($i = 0; $i < 2; $i++)

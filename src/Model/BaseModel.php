@@ -1,6 +1,7 @@
 <?php
 namespace Oblind\Model;
 
+use Exception;
 use Swoole\Database\PDOConfig;
 use Swoole\Database\PDOPool;
 use Swoole\Database\PDOProxy;
@@ -106,6 +107,8 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
   }
 
   function &__get(string $k) {
+    if(!property_exists($this->_data, $k) && (!static::$cacheFields || !in_array($k, static::$cacheFields)))
+      throw new Exception(get_class($this) . "->$k: field not exists");
     return $this->_data->$k;
   }
 
