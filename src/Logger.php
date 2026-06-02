@@ -21,7 +21,8 @@ class Logger {
   }
 
   function addLog(string $l) {
-    $this->logs[] = '[' . date(DATE_ATOM) . "] $l\n";
+    [$usec] = explode(' ', microtime());
+    $this->logs[] = '[' . date('y-m-d H:i:s') . '.' . sprintf('%03d', $usec * 1000) . "] $l\n";
   }
 
   function writeLogs() {
@@ -32,7 +33,7 @@ class Logger {
       //日志文件超过限制后压缩存档
       if(file_exists($this->logFile) && filesize($this->logFile) >= $this->logFileSize) {
         $p = dirname(realpath($this->logFile)) . '/' . $this->prefix;
-        $f = $p . date('y-m-d_H') . '.log.bz2';
+        $f = $p . date('y-m-d_H-i-s') . '.log.bz2';
         if(copy($this->logFile, "compress.bzip2://$f"))
           file_put_contents($this->logFile, '');
       }

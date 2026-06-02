@@ -336,7 +336,8 @@ abstract class WebSocket extends SwooleWebSocket {
   }
 
   function show(string $l, bool $force = false) {
-    echo date('y-m-d H:i:s') . "| $l\n";
+    [$usec] = explode(' ', microtime());
+    echo '[' . date('y-m-d H:i:s') . '.' . sprintf('%03d', $usec * 1000) . "] $l\n";
     $this->log($l, $force);
   }
 
