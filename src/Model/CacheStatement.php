@@ -1,6 +1,7 @@
 <?php
 namespace Oblind\Model;
 
+use Exception;
 use Oblind\Cache\BaseCache;
 
 class CacheStatement extends Statement {
@@ -55,7 +56,6 @@ class CacheStatement extends Statement {
     if($this->condition) {
       $cdts = [];
       foreach($this->condition as $cdt) {
-        $i = 0;
         $cs = [];
         $ks = [];
         foreach($cdt as $k => $v) {
@@ -63,22 +63,22 @@ class CacheStatement extends Statement {
             $ks[] = $k;
             if(is_array($v)) {
               for($j = 0, $c = count($v); $j < $c; $j += 2) {
-                if(is_string($v[$j]))
-                  $v[$j] = '\'' . addslashes($v[$j]) . '\'';
-                elseif($v[$j] === null)
-                  $v[$j] = 'null';
-                $op = $v[$j + 1] ?? '==';
-                $cs[] = "(\$m->$k $op {$v[$j]})";
+                if($c <= $j + 1)
+                  throw new Exception('condition format incorrect');
+                if(is_string($v[$j + 1]))
+                  $v[$j + 1] = '\'' . addslashes($v[$j + 1]) . '\'';
+                elseif($v[$j + 1] === null)
+                  $v[$j + 1] = 'null';
+                if($v[$j] == '=')
+                  $v[$j] = '==';
+                $cs[] = "(\$m->$k {$v[$j]} {$v[$j + 1]})";
               }
             } else {
               if(is_string($v))
                 $v = '\'' . addslashes($v) . '\'';
               elseif($v === null)
                 $v = 'null';
-              $op = $cdt[$i++] ?? '==';
-              if($op == '=')
-                $op = '==';
-              $cs[] = "property_exists(\$m, '$k') && (\$m->$k $op $v)";
+              $cs[] = "property_exists(\$m, '$k') && (\$m->$k == $v)";
             }
             /*if($m->$k != $v) {
               $f = false;
@@ -97,10 +97,25 @@ class CacheStatement extends Statement {
     } else
       $c = null;
     if(is_array($key)) {
+      $i = 0;
       $r = [];
+      $start = $stop = 0;
+      if($this->limit)
+        if($this->limit[1]) {
+          $start = $this->limit[0];
+          $stop = $start + $this->limit[1];
+        } else
+          $stop = $this->limit[0];
       foreach($key as $k) {
-        if(($m = json_decode($cache->get($k))) && (!$c || eval($c)))
+        if(($m = json_decode($cache->get($k))) && (!$c || eval($c))) {
+          $i++;
+          if($start && $i <= $start)
+            continue;
           $r[] = $this->prune($m, $col);
+          if($i >= $stop) {
+            return $r;
+          }
+        }
       }
       return $r;
     } elseif(($m = json_decode($cache->get($key)))) {

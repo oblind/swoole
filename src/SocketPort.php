@@ -15,13 +15,13 @@ class SocketPort {
     $socket = $svr->addListener($host, $port, $type);
     $socket->set(['open_http_protocol' => false]);
 
-    $socket->on('connect', function(WebSocket $svr, int $fd, int $rid) {
-      $this->onConnect($svr, $fd, $rid);
+    $socket->on('connect', function(WebSocket $svr, int $fd, int $reactorId) {
+      $this->onConnect($svr, $fd, $reactorId);
     });
 
-    $socket->on('receive', function(WebSocket $svr, int $fd, int $rid, string $data) {
+    $socket->on('receive', function(WebSocket $svr, int $fd, int $reactorId, string $data) {
       try {
-        $this->onReceive($svr, $fd, $rid, $data);
+        $this->onReceive($svr, $fd, $reactorId, $data);
       } catch(\Throwable $e) {
         $svr->show("EXCEPTION\n" . $e);
       }
@@ -38,10 +38,10 @@ class SocketPort {
     return $this->svr;
   }
 
-  function onConnect(WebSocket $svr, int $fd, int $rid) {
+  function onConnect(WebSocket $svr, int $fd, int $reactorId) {
   }
 
-  function onReceive(WebSocket $svr, int $fd, int $rid, string $data) {
+  function onReceive(WebSocket $svr, int $fd, int $reactorId, string $data) {
   }
 
   function onClose(WebSocket $svr, int $fd) {
