@@ -99,22 +99,23 @@ class CacheStatement extends Statement {
     if(is_array($key)) {
       $i = 0;
       $r = [];
-      $start = $stop = 0;
+      /*$start = $stop = 0;
       if($this->limit)
         if($this->limit[1]) {
           $start = $this->limit[0];
           $stop = $start + $this->limit[1];
         } else
           $stop = $this->limit[0];
+      */
       foreach($key as $k) {
         if(($m = json_decode($cache->get($k))) && (!$c || eval($c))) {
-          $i++;
-          if($start && $i <= $start)
-            continue;
+          //$i++;
+          //if($start && $i <= $start)
+          //  continue;
           $r[] = $this->prune($m, $col);
-          if($i >= $stop) {
-            return $r;
-          }
+          //if($i >= $stop) {
+          //  return $r;
+          //}
         }
       }
       return $r;
