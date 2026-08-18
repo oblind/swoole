@@ -292,7 +292,7 @@ abstract class WebSocket extends SwooleWebSocket {
    * @param array|null $params 附加数据
    * @return void
    */
-  function publish(string $dest, int $id, string $cmd, mixed $data = null, object|array $params = null) {
+  function publish(string $dest, int $id, string $cmd, mixed $data = null, object|array|null $params = null) {
     /*透明传输
     [
       'dest' => $dest,

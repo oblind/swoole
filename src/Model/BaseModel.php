@@ -297,7 +297,9 @@ class BaseModel extends Decachable implements \JsonSerializable, \IteratorAggreg
       elseif($c == 'y' && !strpos('^aeiou', $s[$l - 1])) {
         $s[$l] = 'i';
         static::$tableNames[$cn] = $s . 'es';
-      } else
+      } elseif(substr($s, -4) == 'Data')
+        static::$tableNames[$cn] = $s;
+      else
         static::$tableNames[$cn] = $s . 's';
     }
     return static::$tableNames[$cn];
